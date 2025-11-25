@@ -128,7 +128,7 @@ export default function RelayRepsPage() {
                   .filter((v) => v.status === "active")
                   .map((van) => (
                     <option key={van.id} value={van.id}>
-                      {van.name}
+                      {van.vanCode}
                     </option>
                   ))}
               </Select>

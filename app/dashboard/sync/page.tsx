@@ -92,7 +92,7 @@ export default function SyncPage() {
     },
     {
       header: "Van",
-      accessor: "vanName",
+      accessor: "vanCode",
     },
     {
       header: "Status",
@@ -161,7 +161,7 @@ export default function SyncPage() {
                 <option value="all">All Vans</option>
                 {dummyVans.map((van) => (
                   <option key={van.id} value={van.id}>
-                    {van.name}
+                    {van.vanCode}
                   </option>
                 ))}
               </Select>

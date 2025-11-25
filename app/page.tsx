@@ -42,11 +42,11 @@ export default function VansRepsPage() {
   const vansColumns: Column<Van>[] = [
     {
       header: "Van Name",
-      accessor: "name",
+      accessor: "vanCode",
     },
     {
       header: "Rep",
-      accessor: (row) => row.repName || "Unassigned",
+      accessor: (row) => row.mainRepName || "Unassigned",
     },
     {
       header: "Branch",
@@ -97,7 +97,7 @@ export default function VansRepsPage() {
     },
     {
       header: "Van",
-      accessor: (row) => row.vanName || "Unassigned",
+      accessor: (row) => row.assignedVanCode || "Unassigned",
     },
     {
       header: "Branch",
@@ -198,7 +198,7 @@ export default function VansRepsPage() {
             <div>
               <label className="text-sm font-medium">Van Name</label>
               <Input
-                defaultValue={selectedVan?.name}
+                defaultValue={selectedVan?.vanCode}
                 placeholder="Van-001"
                 className="mt-1"
               />
@@ -304,7 +304,7 @@ export default function VansRepsPage() {
           <DialogHeader>
             <DialogTitle>Assign Rep to Van</DialogTitle>
             <DialogDescription>
-              Select a representative to assign to {selectedVan?.name}
+              Select a representative to assign to {selectedVan?.vanCode}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">

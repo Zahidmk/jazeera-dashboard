@@ -73,6 +73,9 @@ export interface RelayRep {
   email?: string
   assignedVanIds: string[]
   assignedVanCodes: string[]
+  assignedVanName?: string
+  type?: "backup" | "replacement"
+  shift?: string
   shiftTiming: ShiftTiming
   branch: string
   status: RepStatus

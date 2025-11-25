@@ -49,8 +49,8 @@ export function Sidebar() {
       </div>
 
       {/* Mobile Sidebar */}
-      <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
-        <SheetContent side="left" onClose={() => setIsMobileOpen(false)} className="w-72 p-0">
+      <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen} side="left">
+        <SheetContent onClose={() => setIsMobileOpen(false)} className="w-72 p-0">
           <div className="flex flex-col h-full bg-white">
             <div className="flex items-center justify-between p-6 border-b bg-gradient-to-r from-emerald-50 to-emerald-100">
               <div className="flex items-center gap-3">
