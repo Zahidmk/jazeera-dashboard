@@ -48,7 +48,7 @@ export function SyncRateChart({ data }: SyncRateChartProps) {
               <Line
                 type="monotone"
                 dataKey="rate"
-                stroke="#10b981"
+                stroke="#4F46E5"
                 strokeWidth={2}
                 dot={{ r: 3 }}
                 activeDot={{ r: 5 }}

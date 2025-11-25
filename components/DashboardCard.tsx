@@ -33,7 +33,7 @@ export function DashboardCard({
           {title}
         </CardTitle>
         {icon && (
-          <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-white shadow-lg flex-shrink-0 ml-2">
+          <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl flex items-center justify-center text-white shadow-lg flex-shrink-0 ml-2" style={{ background: 'linear-gradient(to bottom right, #4F46E5, #4338CA)' }}>
             {icon}
           </div>
         )}
@@ -46,15 +46,16 @@ export function DashboardCard({
         {trend && (
           <div className="flex items-center gap-1.5 mt-2 sm:mt-3">
             {trend.isPositive ? (
-              <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" />
+              <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4" style={{ color: '#4F46E5' }} />
             ) : (
               <TrendingDown className="h-3 w-3 sm:h-4 sm:w-4 text-red-600" />
             )}
             <p
               className={cn(
                 "text-xs font-semibold",
-                trend.isPositive ? "text-green-600" : "text-red-600"
+                trend.isPositive ? "" : "text-red-600"
               )}
+              style={trend.isPositive ? { color: '#4F46E5' } : undefined}
             >
               {trend.isPositive ? "+" : ""}
               {trend.value}% from last period

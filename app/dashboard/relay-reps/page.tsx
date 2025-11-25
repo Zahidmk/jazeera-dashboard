@@ -240,7 +240,7 @@ export default function RelayRepsPage() {
               </CardHeader>
               <CardContent>
                 <div className="flex items-center gap-2">
-                  <div className="h-3 w-3 rounded-full bg-green-500" />
+                  <div className="h-3 w-3 rounded-full" style={{ backgroundColor: '#4F46E5' }} />
                   <p className="text-sm font-medium">Available</p>
                 </div>
               </CardContent>

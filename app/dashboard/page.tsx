@@ -5,26 +5,77 @@ import { DashboardCard } from "@/components/DashboardCard"
 import { DataTable, Column } from "@/components/DataTable"
 import { StatusBadge } from "@/components/StatusBadge"
 import { Button } from "@/components/ui/button"
-import { SyncRateChart } from "@/components/Charts/SyncRateChart"
-import { SyncAttemptsChart } from "@/components/Charts/SyncAttemptsChart"
-import { ErrorPieChart } from "@/components/Charts/ErrorPieChart"
+import { VansDistributionChart } from "@/components/Charts/VansDistributionChart"
+import { RepsDistributionChart } from "@/components/Charts/RepsDistributionChart"
 import {
   getKPIs,
-  dummySyncMetrics,
+  dummyVans,
+  dummyReps,
   dummyRecentActivities,
 } from "@/lib/dummy-data"
 import { format } from "date-fns"
-import { Truck, Users, RefreshCw, AlertCircle, ListChecks, TrendingUp, Plus, Package, ShoppingCart } from "lucide-react"
-import { RecentActivity } from "@/lib/types"
+import { Truck, Users, RefreshCw, Plus, ShoppingCart } from "lucide-react"
+import { RecentActivity, Van, Rep } from "@/lib/types"
 
 export default function DashboardPage() {
   const kpis = getKPIs()
+  
+  // Filter to show only main reps (base reps)
+  const baseReps = dummyReps.filter((rep) => rep.role === "main")
 
-  const errorDistribution = [
-    { name: "Connection Timeout", value: 12 },
-    { name: "Invalid Payload", value: 8 },
-    { name: "Server Error", value: 5 },
-    { name: "Network Error", value: 3 },
+  const vansColumns: Column<Van>[] = [
+    {
+      header: "Van Code",
+      accessor: "vanCode",
+    },
+    {
+      header: "Registration",
+      accessor: "registrationNumber",
+    },
+    {
+      header: "Main Rep",
+      accessor: (row) => row.mainRepName || "Unassigned",
+    },
+    {
+      header: "Branch",
+      accessor: "branch",
+    },
+    {
+      header: "Status",
+      accessor: (row) => <StatusBadge status={row.status} />,
+    },
+    {
+      header: "Last Sync",
+      accessor: (row) =>
+        row.lastSync ? format(row.lastSync, "MMM dd, yyyy HH:mm") : "Never",
+    },
+  ]
+
+  const repsColumns: Column<Rep>[] = [
+    {
+      header: "Name",
+      accessor: "name",
+    },
+    {
+      header: "Assigned Van",
+      accessor: (row) => row.assignedVanCode || "Unassigned",
+    },
+    {
+      header: "Branch",
+      accessor: "branch",
+    },
+    {
+      header: "Status",
+      accessor: (row) => <StatusBadge status={row.status} />,
+    },
+    {
+      header: "Phone",
+      accessor: "phone",
+    },
+    {
+      header: "Shift",
+      accessor: (row) => row.shiftTiming || "-",
+    },
   ]
 
   const recentActivitiesColumns: Column<RecentActivity>[] = [
@@ -76,7 +127,7 @@ export default function DashboardPage() {
         }
       />
       <div className="p-4 sm:p-6 lg:p-8 space-y-6 lg:space-y-8">
-        {/* KPI Cards - Two Rows Layout */}
+        {/* KPI Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           <DashboardCard
             title="Total Vans"
@@ -98,42 +149,35 @@ export default function DashboardPage() {
             value={kpis.todayDeliveries}
             icon={<ShoppingCart className="h-5 w-5" />}
           />
-          <DashboardCard
-            title="Sync Success Rate"
-            value={`${kpis.syncSuccessRate}%`}
-            icon={<TrendingUp className="h-5 w-5" />}
-            trend={{ value: 2, isPositive: true }}
-          />
-          <DashboardCard
-            title="Failed Syncs"
-            value={kpis.failedSyncs}
-            icon={<AlertCircle className="h-5 w-5" />}
-            trend={{ value: -5, isPositive: true }}
-          />
-          <DashboardCard
-            title="Low Stock Vans"
-            value={kpis.lowStockVans}
-            icon={<Package className="h-5 w-5" />}
-          />
-          <DashboardCard
-            title="Queue Items"
-            value={kpis.totalQueueItems}
-            icon={<ListChecks className="h-5 w-5" />}
-          />
         </div>
 
-        {/* Charts - Responsive Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
-          <div className="lg:col-span-2">
-            <SyncRateChart data={dummySyncMetrics} />
-          </div>
-          <div className="lg:col-span-1">
-            <ErrorPieChart data={errorDistribution} />
+        {/* Distribution Charts - Single Row */}
+        <div className="space-y-4">
+          <h2 className="text-lg sm:text-xl font-semibold">Distribution Overview</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <VansDistributionChart vans={dummyVans} />
+            <RepsDistributionChart reps={baseReps} />
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 lg:gap-6">
-          <SyncAttemptsChart data={dummySyncMetrics} />
+        {/* Base Vans Table */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg sm:text-xl font-semibold">Base Vans</h2>
+          </div>
+          <div className="overflow-x-auto">
+            <DataTable data={dummyVans} columns={vansColumns} />
+          </div>
+        </div>
+
+        {/* Base Reps Table */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg sm:text-xl font-semibold">Base Representatives</h2>
+          </div>
+          <div className="overflow-x-auto">
+            <DataTable data={baseReps} columns={repsColumns} />
+          </div>
         </div>
 
         {/* Recent Activities */}

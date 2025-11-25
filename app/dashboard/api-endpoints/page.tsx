@@ -48,9 +48,9 @@ export default function APIEndpointsPage() {
   const getMethodColor = (method: string) => {
     switch (method) {
       case "GET":
-        return "bg-emerald-500"
+        return ""
       case "POST":
-        return "bg-green-500"
+        return ""
       case "PUT":
         return "bg-yellow-500"
       case "DELETE":
@@ -70,7 +70,10 @@ export default function APIEndpointsPage() {
     {
       header: "Method",
       accessor: (row) => (
-        <Badge className={`${getMethodColor(row.method)} text-white`}>
+        <Badge 
+          className={`${getMethodColor(row.method)} text-white`}
+          style={(row.method === "GET" || row.method === "POST") ? { backgroundColor: '#4F46E5' } : undefined}
+        >
           {row.method}
         </Badge>
       ),
@@ -123,7 +126,7 @@ export default function APIEndpointsPage() {
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-5 w-5 text-green-500" />
+                <CheckCircle2 className="h-5 w-5" style={{ color: '#4F46E5' }} />
                 <span className="font-medium">All Systems Operational</span>
               </div>
             </CardContent>

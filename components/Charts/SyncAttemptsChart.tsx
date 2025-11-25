@@ -44,7 +44,7 @@ export function SyncAttemptsChart({ data }: SyncAttemptsChartProps) {
                 labelStyle={{ color: "#000" }}
                 contentStyle={{ fontSize: 12 }}
               />
-              <Bar dataKey="attempts" fill="#059669" radius={[8, 8, 0, 0]} />
+              <Bar dataKey="attempts" fill="#4F46E5" radius={[8, 8, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>

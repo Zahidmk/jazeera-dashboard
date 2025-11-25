@@ -117,7 +117,7 @@ export default function SystemHealthPage() {
                     yAxisId="left"
                     type="monotone"
                     dataKey="memory"
-                    stroke="#059669"
+                    stroke="#4F46E5"
                     strokeWidth={2}
                     name="Memory Usage (%)"
                     dot={{ r: 3 }}
@@ -127,7 +127,7 @@ export default function SystemHealthPage() {
                     yAxisId="right"
                     type="monotone"
                     dataKey="latency"
-                    stroke="#10b981"
+                    stroke="#4F46E5"
                     strokeWidth={2}
                     name="API Latency (ms)"
                     dot={{ r: 3 }}

@@ -88,7 +88,7 @@ export default function VansRepsPage() {
         <div className="flex items-center gap-2">
           {row.inventoryLoaded ? (
             <>
-              <Package className="h-4 w-4 text-green-600" />
+              <Package className="h-4 w-4" style={{ color: '#4F46E5' }} />
               <span className="text-sm">
                 {row.currentLoad} / {row.capacity} kg
               </span>

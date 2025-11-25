@@ -15,11 +15,12 @@ function Badge({ className, variant = "default", ...props }: BadgeProps) {
           "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80": variant === "secondary",
           "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80": variant === "destructive",
           "text-foreground": variant === "outline",
-          "border-transparent bg-green-500 text-white hover:bg-green-600": variant === "success",
+          "border-transparent text-white": variant === "success",
           "border-transparent bg-yellow-500 text-white hover:bg-yellow-600": variant === "warning",
         },
         className
       )}
+      style={variant === "success" ? { backgroundColor: '#4F46E5' } : undefined}
       {...props}
     />
   )

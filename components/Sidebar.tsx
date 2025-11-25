@@ -9,7 +9,6 @@ import {
   Repeat,
   ListChecks,
   Code,
-  Activity,
   Settings,
   Menu,
   X,
@@ -27,7 +26,6 @@ const navigation = [
   { name: "Relay Reps", href: "/dashboard/relay-reps", icon: Users },
   { name: "Sync Queue & Logs", href: "/dashboard/sync", icon: ListChecks },
   { name: "API Endpoints", href: "/dashboard/api-endpoints", icon: Code },
-  { name: "System Health", href: "/dashboard/system-health", icon: Activity },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ]
 
@@ -52,9 +50,9 @@ export function Sidebar() {
       <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen} side="left">
         <SheetContent onClose={() => setIsMobileOpen(false)} className="w-72 p-0">
           <div className="flex flex-col h-full bg-white">
-            <div className="flex items-center justify-between p-6 border-b bg-gradient-to-r from-emerald-50 to-emerald-100">
+            <div className="flex items-center justify-between p-6 border-b bg-gradient-to-r from-indigo-50 to-indigo-100">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-lg">
+                <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-lg" style={{ background: 'linear-gradient(to bottom right, #4F46E5, #4338CA)' }}>
                   <LayoutDashboard className="h-5 w-5 text-white" />
                 </div>
                 <div>
@@ -75,7 +73,7 @@ export function Sidebar() {
                       className={cn(
                         "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200",
                         isActive
-                          ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/30"
+                          ? "text-white shadow-lg shadow-indigo-500/30"
                           : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
                       )}
                     >
@@ -96,9 +94,9 @@ export function Sidebar() {
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex lg:flex-col lg:w-72 lg:fixed lg:inset-y-0 lg:border-r lg:bg-white lg:shadow-sm">
         <div className="flex flex-col flex-1 min-h-0">
-            <div className="flex items-center h-20 px-6 border-b bg-gradient-to-r from-emerald-50 to-emerald-100">
+            <div className="flex items-center h-20 px-6 border-b bg-gradient-to-r from-indigo-50 to-indigo-100">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-lg">
+              <div className="h-10 w-10 rounded-lg flex items-center justify-center shadow-lg" style={{ background: 'linear-gradient(to bottom right, #4F46E5, #4338CA)' }}>
                 <LayoutDashboard className="h-5 w-5 text-white" />
               </div>
               <div>
@@ -118,9 +116,10 @@ export function Sidebar() {
                     className={cn(
                       "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200 group",
                       isActive
-                        ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/30"
+                        ? "text-white shadow-lg shadow-indigo-500/30"
                         : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
                     )}
+                    style={isActive ? { background: 'linear-gradient(to right, #4F46E5, #4338CA)' } : undefined}
                   >
                     <item.icon className={cn(
                       "h-5 w-5 transition-transform group-hover:scale-110",
@@ -136,10 +135,10 @@ export function Sidebar() {
             </nav>
           </ScrollArea>
           <div className="p-4 border-t">
-            <div className="rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100 p-4 border border-emerald-200">
+            <div className="rounded-xl bg-gradient-to-br from-indigo-50 to-indigo-100 p-4 border border-indigo-200">
               <p className="text-xs font-semibold text-slate-900 mb-1">System Status</p>
               <div className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                <div className="h-2 w-2 rounded-full animate-pulse" style={{ backgroundColor: '#4F46E5' }} />
                 <p className="text-xs text-slate-600">All systems operational</p>
               </div>
             </div>
