@@ -20,7 +20,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { dummyVans, dummyReps, dummyRelayReps } from "@/lib/dummy-data"
 import { Van, Rep } from "@/lib/types"
 import { format } from "date-fns"
-import { Plus, Edit, UserPlus, Package, Route, Truck } from "lucide-react"
+import { Plus, Edit, UserPlus, Package, Route, Truck, Eye } from "lucide-react"
 
 export default function VansRepsPage() {
   const [vans, setVans] = useState(dummyVans)
@@ -108,6 +108,15 @@ export default function VansRepsPage() {
       header: "Actions",
       accessor: (row) => (
         <div className="flex gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              window.location.href = `/dashboard/vans/${row.id}`
+            }}
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
           <Button
             variant="ghost"
             size="sm"

@@ -7,15 +7,17 @@ import { StatusBadge } from "@/components/StatusBadge"
 import { Button } from "@/components/ui/button"
 import { VansDistributionChart } from "@/components/Charts/VansDistributionChart"
 import { RepsDistributionChart } from "@/components/Charts/RepsDistributionChart"
+import { TopPerformingVansChart } from "@/components/Charts/TopPerformingVansChart"
+import { SyncSuccessRateChart } from "@/components/Charts/SyncSuccessRateChart"
 import {
   getKPIs,
   dummyVans,
   dummyReps,
-  dummyRecentActivities,
+  dummySyncLogs,
 } from "@/lib/dummy-data"
 import { format } from "date-fns"
 import { Truck, Users, RefreshCw, Plus, ShoppingCart } from "lucide-react"
-import { RecentActivity, Van, Rep } from "@/lib/types"
+import { Van, Rep } from "@/lib/types"
 
 export default function DashboardPage() {
   const kpis = getKPIs()
@@ -78,33 +80,6 @@ export default function DashboardPage() {
     },
   ]
 
-  const recentActivitiesColumns: Column<RecentActivity>[] = [
-    {
-      header: "Type",
-      accessor: "type",
-    },
-    {
-      header: "Rep",
-      accessor: (row) => row.repName || "-",
-    },
-    {
-      header: "Van",
-      accessor: (row) => row.vanCode || "-",
-    },
-    {
-      header: "Message",
-      accessor: (row) => row.message || "-",
-    },
-    {
-      header: "Status",
-      accessor: (row) => <StatusBadge status={row.status} />,
-    },
-    {
-      header: "Timestamp",
-      accessor: (row) => format(row.timestamp, "MMM dd, yyyy HH:mm"),
-    },
-  ]
-
   return (
     <div className="min-h-screen bg-background">
       <Topbar
@@ -151,12 +126,24 @@ export default function DashboardPage() {
           />
         </div>
 
-        {/* Distribution Charts - Single Row */}
-        <div className="space-y-4">
-          <h2 className="text-lg sm:text-xl font-semibold">Distribution Overview</h2>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <VansDistributionChart vans={dummyVans} />
-            <RepsDistributionChart reps={baseReps} />
+        {/* Charts Section */}
+        <div className="space-y-6">
+          {/* Distribution Charts */}
+          <div className="space-y-4">
+            <h2 className="text-lg sm:text-xl font-semibold">Distribution Overview</h2>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <VansDistributionChart vans={dummyVans} />
+              <RepsDistributionChart reps={baseReps} />
+            </div>
+          </div>
+
+          {/* Performance & Failures Charts */}
+          <div className="space-y-4">
+            <h2 className="text-lg sm:text-xl font-semibold">Performance & Analytics</h2>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <TopPerformingVansChart vans={dummyVans} />
+              <SyncSuccessRateChart syncLogs={dummySyncLogs} />
+            </div>
           </div>
         </div>
 
@@ -177,16 +164,6 @@ export default function DashboardPage() {
           </div>
           <div className="overflow-x-auto">
             <DataTable data={baseReps} columns={repsColumns} />
-          </div>
-        </div>
-
-        {/* Recent Activities */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg sm:text-xl font-semibold">Recent Activities</h2>
-          </div>
-          <div className="overflow-x-auto">
-            <DataTable data={dummyRecentActivities} columns={recentActivitiesColumns} />
           </div>
         </div>
       </div>
