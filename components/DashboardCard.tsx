@@ -1,7 +1,6 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { ReactNode } from "react"
-import { TrendingUp, TrendingDown } from "lucide-react"
 
 interface DashboardCardProps {
   title: string
@@ -12,7 +11,10 @@ interface DashboardCardProps {
     value: number
     isPositive: boolean
   }
+  progress?: number // 0-100 percentage for circular progress
   className?: string
+  variant?: 'blue' | 'red' | 'green' | 'orange' | 'purple'
+  featured?: boolean // For gradient background highlight
 }
 
 export function DashboardCard({
@@ -21,47 +23,94 @@ export function DashboardCard({
   value,
   icon,
   trend,
+  progress,
   className,
+  variant = 'blue',
+  featured = false,
 }: DashboardCardProps) {
+  const gradientClass = `gradient-${variant}`
+  const radius = 54
+  const circumference = 2 * Math.PI * radius
+  const strokeDashoffset = progress
+    ? circumference - (progress / 100) * circumference
+    : 0
+
+  const trendColor = trend?.isPositive ? 'text-green-600' : 'text-red-600'
+
   return (
     <Card className={cn(
-      "transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border border-slate-200 bg-white h-full",
+      "card-hover border border-gray-200 h-full overflow-hidden animate-scale-in",
+      featured ? "bg-gradient-to-br from-blue-600 to-blue-700 border-blue-600" : "bg-white",
       className
     )}>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 sm:pb-3">
-        <CardTitle className="text-xs sm:text-sm font-semibold text-slate-600 uppercase tracking-wide line-clamp-2">
-          {title}
-        </CardTitle>
-        {icon && (
-          <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl flex items-center justify-center text-white shadow-lg flex-shrink-0 ml-2" style={{ background: 'linear-gradient(to bottom right, #4F46E5, #4338CA)' }}>
-            {icon}
-          </div>
-        )}
-      </CardHeader>
-      <CardContent className="pt-2 sm:pt-0">
-        <div className="text-2xl sm:text-3xl font-bold text-slate-900 mb-1 sm:mb-2">{value}</div>
-        {description && (
-          <p className="text-xs text-slate-500 mb-2 hidden sm:block">{description}</p>
-        )}
-        {trend && (
-          <div className="flex items-center gap-1.5 mt-2 sm:mt-3">
-            {trend.isPositive ? (
-              <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4" style={{ color: '#4F46E5' }} />
-            ) : (
-              <TrendingDown className="h-3 w-3 sm:h-4 sm:w-4 text-red-600" />
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <CardTitle className={cn("text-sm font-medium mb-1", featured ? "text-blue-100" : "text-slate-500")}>
+              {title}
+            </CardTitle>
+            {description && (
+              <p className="text-xs text-slate-400 mt-1">{description}</p>
             )}
-            <p
-              className={cn(
-                "text-xs font-semibold",
-                trend.isPositive ? "" : "text-red-600"
-              )}
-              style={trend.isPositive ? { color: '#4F46E5' } : undefined}
-            >
-              {trend.isPositive ? "+" : ""}
-              {trend.value}% from last period
-            </p>
           </div>
-        )}
+          {progress !== undefined && (
+            <div className="relative w-20 h-20 flex-shrink-0">
+              <svg className="transform -rotate-90 w-20 h-20">
+                {/* Background circle */}
+                <circle
+                  cx="40"
+                  cy="40"
+                  r={radius}
+                  stroke="#F1F5F9"
+                  strokeWidth="8"
+                  fill="none"
+                />
+                {/* Progress circle */}
+                <circle
+                  cx="40"
+                  cy="40"
+                  r={radius}
+                  stroke="url(#gradient)"
+                  strokeWidth="8"
+                  fill="none"
+                  strokeDasharray={circumference}
+                  strokeDashoffset={strokeDashoffset}
+                  strokeLinecap="round"
+                  className="progress-ring transition-all duration-1000 ease-out"
+                />
+                <defs>
+                  <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor={variant === 'blue' ? '#1B60E8' : variant === 'red' ? '#EF4444' : variant === 'green' ? '#10B981' : variant === 'orange' ? '#F59E0B' : '#8B5CF6'} />
+                    <stop offset="100%" stopColor={variant === 'blue' ? '#1450C9' : variant === 'red' ? '#DC2626' : variant === 'green' ? '#059669' : variant === 'orange' ? '#D97706' : '#7C3AED'} />
+                  </linearGradient>
+                </defs>
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-lg font-bold text-slate-700">{progress}%</span>
+              </div>
+            </div>
+          )}
+        </div>
+      </CardHeader>
+      <CardContent className="pt-0">
+        <div className="flex items-end justify-between">
+          <div>
+            <div className={cn("text-3xl font-bold mb-1", featured ? "text-white" : "text-slate-900")}>{value}</div>
+            {trend && (
+              <div className="flex items-center gap-1.5">
+                <span className={cn("text-xs font-semibold", featured ? "text-white" : trendColor)}>
+                  {trend.isPositive ? "↑" : "↓"} {Math.abs(trend.value)}%
+                </span>
+                <span className={cn("text-xs", featured ? "text-blue-100" : "text-slate-400")}>vs last period</span>
+              </div>
+            )}
+          </div>
+          {icon && !progress && (
+            <div className={cn("h-12 w-12 rounded-xl flex items-center justify-center", featured ? "bg-white/20 text-white" : "bg-blue-50 text-blue-600")}>
+              {icon}
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   )

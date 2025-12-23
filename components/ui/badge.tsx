@@ -20,7 +20,7 @@ function Badge({ className, variant = "default", ...props }: BadgeProps) {
         },
         className
       )}
-      style={variant === "success" ? { backgroundColor: '#4F46E5' } : undefined}
+      style={variant === "success" ? { backgroundColor: '#1B60E8' } : undefined}
       {...props}
     />
   )

@@ -2,6 +2,7 @@
 
 import { Topbar } from "@/components/Topbar"
 import { DashboardCard } from "@/components/DashboardCard"
+import { ImageCard } from "@/components/ImageCard"
 import { DataTable, Column } from "@/components/DataTable"
 import { StatusBadge } from "@/components/StatusBadge"
 import { Button } from "@/components/ui/button"
@@ -11,17 +12,25 @@ import { TopPerformingVansChart } from "@/components/Charts/TopPerformingVansCha
 import { SyncSuccessRateChart } from "@/components/Charts/SyncSuccessRateChart"
 import {
   getKPIs,
+  getSalesKPIs,
+  getDeliveryKPIs,
+  getLeadKPIs,
   dummyVans,
   dummyReps,
   dummySyncLogs,
 } from "@/lib/dummy-data"
 import { format } from "date-fns"
-import { Truck, Users, RefreshCw, Plus, ShoppingCart } from "lucide-react"
+import { Truck, Users, RefreshCw, Plus, ShoppingCart, DollarSign, Package, UserPlus, Navigation, TrendingUp, Banknote, Wallet } from "lucide-react"
+import { SalesByVanChart } from "@/components/Charts/SalesByVanChart"
+import { SalesByRouteChart } from "@/components/Charts/SalesByRouteChart"
 import { Van, Rep } from "@/lib/types"
 
 export default function DashboardPage() {
   const kpis = getKPIs()
-  
+  const salesKPIs = getSalesKPIs()
+  const deliveryKPIs = getDeliveryKPIs()
+  const leadKPIs = getLeadKPIs()
+
   // Filter to show only main reps (base reps)
   const baseReps = dummyReps.filter((rep) => rep.role === "main")
 
@@ -86,48 +95,106 @@ export default function DashboardPage() {
         title="Dashboard"
         actions={
           <>
-            <Button size="sm" variant="outline">
+            <Button size="sm" variant="outline" className="hidden xl:flex">
               <Plus className="h-4 w-4 mr-2" />
               Add Van
             </Button>
-            <Button size="sm" variant="outline">
+            <Button size="sm" variant="outline" className="hidden xl:flex">
               <Plus className="h-4 w-4 mr-2" />
-              Add Rep
+              Assign Route
+            </Button>
+            <Button size="sm" variant="outline" className="hidden 2xl:flex">
+              <Package className="h-4 w-4 mr-2" />
+              Load Stock
             </Button>
             <Button size="sm">
               <RefreshCw className="h-4 w-4 mr-2" />
-              Sync Now
+              <span className="hidden sm:inline">Sync Now</span>
+              <span className="sm:hidden">Sync</span>
             </Button>
           </>
         }
       />
-      <div className="p-4 sm:p-6 lg:p-8 space-y-6 lg:space-y-8">
-        {/* KPI Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-          <DashboardCard
-            title="Total Vans"
-            value={kpis.totalVans}
-            icon={<Truck className="h-5 w-5" />}
-          />
-          <DashboardCard
-            title="Active Vans"
-            value={kpis.activeVans}
-            icon={<Truck className="h-5 w-5" />}
-          />
-          <DashboardCard
-            title="Active Reps"
-            value={kpis.activeReps}
-            icon={<Users className="h-5 w-5" />}
-          />
-          <DashboardCard
-            title="Today's Deliveries"
-            value={kpis.todayDeliveries}
-            icon={<ShoppingCart className="h-5 w-5" />}
-          />
+      <div className="p-3 sm:p-4 lg:p-6 space-y-4 sm:space-y-6">
+        {/* Sales Performance Section */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg sm:text-xl font-bold text-gray-900">Sales Performance</h2>
+              <p className="text-xs text-gray-500 mt-0.5">Track your revenue and sales metrics</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <DashboardCard
+              title="Total Sales"
+              value={`SAR ${salesKPIs.totalSales.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+              icon={<TrendingUp className="h-5 w-5" />}
+              variant="blue"
+              trend={{ value: 12, isPositive: true }}
+              featured={true}
+            />
+            <DashboardCard
+              title="Today's Sales"
+              value={`SAR ${salesKPIs.todaySales.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+              icon={<Banknote className="h-5 w-5" />}
+              variant="blue"
+              trend={{ value: 8, isPositive: true }}
+            />
+            <DashboardCard
+              title="Weekly Collection"
+              value={`SAR ${salesKPIs.weekSales.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+              icon={<Wallet className="h-5 w-5" />}
+              variant="blue"
+              trend={{ value: 15, isPositive: true }}
+            />
+            <DashboardCard
+              title="Deliveries"
+              value={`${deliveryKPIs.completed} / ${deliveryKPIs.completed + deliveryKPIs.pending}`}
+              icon={<ShoppingCart className="h-5 w-5" />}
+              variant="green"
+              trend={{ value: 5, isPositive: true }}
+            />
+          </div>
+        </div>
+
+        {/* Team & Leads Section */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">Team & Leads</h2>
+              <p className="text-xs text-gray-500 mt-0.5">Manage your team and customer leads</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <DashboardCard
+              title="Active Vans"
+              value={kpis.activeVans}
+              icon={<Truck className="h-5 w-5" />}
+              variant="blue"
+            />
+            <DashboardCard
+              title="Active Reps"
+              value={kpis.activeReps}
+              icon={<Users className="h-5 w-5" />}
+              variant="blue"
+            />
+            <DashboardCard
+              title="New Leads (Today)"
+              value={leadKPIs.todayLeads}
+              icon={<UserPlus className="h-5 w-5" />}
+              variant="blue"
+            />
+            <DashboardCard
+              title="Pending Approval"
+              value={leadKPIs.pendingApproval}
+              icon={<UserPlus className="h-5 w-5" />}
+              variant="orange"
+            />
+          </div>
         </div>
 
         {/* Charts Section */}
-        <div className="space-y-6">
+        <div className="space-y-5">
           {/* Distribution Charts */}
           <div className="space-y-4">
             <h2 className="text-lg sm:text-xl font-semibold">Distribution Overview</h2>
@@ -137,7 +204,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Performance & Failures Charts */}
+          {/* Performance & Analytics Charts */}
           <div className="space-y-4">
             <h2 className="text-lg sm:text-xl font-semibold">Performance & Analytics</h2>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

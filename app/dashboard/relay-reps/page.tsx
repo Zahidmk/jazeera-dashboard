@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Topbar } from "@/components/Topbar"
 import { DataTable, Column } from "@/components/DataTable"
 import { StatusBadge } from "@/components/StatusBadge"
@@ -16,23 +17,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { dummyRelayReps, dummyVans } from "@/lib/dummy-data"
 import { RelayRep } from "@/lib/types"
 import { Plus, Eye } from "lucide-react"
 
 export default function RelayRepsPage() {
+  const router = useRouter()
   const [relayReps, setRelayReps] = useState(dummyRelayReps)
   const [addModalOpen, setAddModalOpen] = useState(false)
-  const [detailsOpen, setDetailsOpen] = useState(false)
-  const [selectedRep, setSelectedRep] = useState<RelayRep | null>(null)
 
   const columns: Column<RelayRep>[] = [
     {
@@ -66,8 +58,7 @@ export default function RelayRepsPage() {
           variant="ghost"
           size="sm"
           onClick={() => {
-            setSelectedRep(row)
-            setDetailsOpen(true)
+            router.push(`/dashboard/relay-reps/${row.id}`)
           }}
         >
           <Eye className="h-4 w-4" />
@@ -159,95 +150,6 @@ export default function RelayRepsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Details Drawer */}
-      <Sheet open={detailsOpen} onOpenChange={setDetailsOpen}>
-        <SheetContent onClose={() => setDetailsOpen(false)}>
-          <SheetHeader>
-            <SheetTitle>{selectedRep?.name}</SheetTitle>
-            <SheetDescription>Relay Representative Details</SheetDescription>
-          </SheetHeader>
-          <div className="mt-6 space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Rep Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Name</p>
-                  <p className="font-medium">{selectedRep?.name}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Type</p>
-                  <Badge variant={selectedRep?.type === "backup" ? "secondary" : "default"}>
-                    {selectedRep?.type === "backup" ? "Backup" : "Replacement"}
-                  </Badge>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Shift</p>
-                  <p className="font-medium">{selectedRep?.shift}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Status</p>
-                  <StatusBadge status={selectedRep?.status || "active"} />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Phone</p>
-                  <p className="font-medium">{selectedRep?.phone || "-"}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Email</p>
-                  <p className="font-medium">{selectedRep?.email || "-"}</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Assignment</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div>
-                  <p className="text-sm text-muted-foreground">Assigned Van</p>
-                  <p className="font-medium">
-                    {selectedRep?.assignedVanName || "Unassigned"}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Assignment History</CardTitle>
-                <CardDescription>Recent van assignments</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="text-sm">
-                    <p className="font-medium">Van-001</p>
-                    <p className="text-muted-foreground">Jan 15, 2024 - Present</p>
-                  </div>
-                  <div className="text-sm">
-                    <p className="font-medium">Van-003</p>
-                    <p className="text-muted-foreground">Dec 20, 2023 - Jan 15, 2024</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Availability Status</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-2">
-                  <div className="h-3 w-3 rounded-full" style={{ backgroundColor: '#4F46E5' }} />
-                  <p className="text-sm font-medium">Available</p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </SheetContent>
-      </Sheet>
     </div>
   )
 }

@@ -28,14 +28,14 @@ export function SyncAttemptsChart({ data }: SyncAttemptsChartProps) {
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis 
-                dataKey="hour" 
+              <XAxis
+                dataKey="hour"
                 tick={{ fontSize: 12 }}
                 angle={-45}
                 textAnchor="end"
                 height={60}
               />
-              <YAxis 
+              <YAxis
                 tick={{ fontSize: 12 }}
                 width={50}
               />
@@ -44,7 +44,7 @@ export function SyncAttemptsChart({ data }: SyncAttemptsChartProps) {
                 labelStyle={{ color: "#000" }}
                 contentStyle={{ fontSize: 12 }}
               />
-              <Bar dataKey="attempts" fill="#4F46E5" radius={[8, 8, 0, 0]} />
+              <Bar dataKey="attempts" fill="#1B60E8" radius={[8, 8, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>

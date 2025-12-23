@@ -28,15 +28,15 @@ export function SyncRateChart({ data }: SyncRateChartProps) {
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis 
-                dataKey="time" 
+              <XAxis
+                dataKey="time"
                 tick={{ fontSize: 12 }}
                 angle={-45}
                 textAnchor="end"
                 height={60}
               />
-              <YAxis 
-                domain={[0, 100]} 
+              <YAxis
+                domain={[0, 100]}
                 tick={{ fontSize: 12 }}
                 width={50}
               />
@@ -48,7 +48,7 @@ export function SyncRateChart({ data }: SyncRateChartProps) {
               <Line
                 type="monotone"
                 dataKey="rate"
-                stroke="#4F46E5"
+                stroke="#1B60E8"
                 strokeWidth={2}
                 dot={{ r: 3 }}
                 activeDot={{ r: 5 }}

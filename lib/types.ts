@@ -163,3 +163,180 @@ export interface DashboardKPIs {
   lowStockVans: number
   totalQueueItems: number
 }
+
+// New types for Orders & Deliveries
+export type OrderStatus = "pending" | "out-for-delivery" | "delivered" | "failed" | "returned"
+export type DeliveryStatus = "pending" | "out-for-delivery" | "delivered" | "partially-delivered" | "failed" | "returned"
+
+export interface OrderItem {
+  id: string
+  productId: string
+  productName: string
+  quantity: number
+  unit: string
+  price: number
+  total: number
+}
+
+export interface Order {
+  id: string
+  orderNumber: string
+  customerId: string
+  customerName: string
+  customerPhone: string
+  customerAddress: string
+  vanId: string
+  vanCode: string
+  routeId: string
+  routeName: string
+  driverId: string
+  driverName: string
+  status: OrderStatus
+  deliveryStatus: DeliveryStatus
+  items: OrderItem[]
+  totalAmount: number
+  deliveryDate: Date
+  createdAt: Date
+  notes?: string
+}
+
+export interface Delivery {
+  id: string
+  orderId: string
+  orderNumber: string
+  status: DeliveryStatus
+  deliveredAt?: Date
+  notes?: string
+  photoUrl?: string
+  failureReason?: string
+  updatedAt: Date
+}
+
+// Cash Sales & Payments
+export type PaymentMethod = "cash" | "card" | "upi"
+
+export interface CashSaleItem {
+  id: string
+  productId: string
+  productName: string
+  quantity: number
+  unit: string
+  price: number
+  total: number
+}
+
+export interface CashSale {
+  id: string
+  saleNumber: string
+  vanId: string
+  vanCode: string
+  driverId: string
+  driverName: string
+  customerId: string
+  customerName: string
+  customerPhone: string
+  items: CashSaleItem[]
+  totalAmount: number
+  paymentMethod: PaymentMethod
+  createdAt: Date
+  receiptUrl?: string
+}
+
+// Leads & Customers
+export type LeadStatus = "pending" | "approved" | "rejected" | "converted"
+
+export interface Lead {
+  id: string
+  name: string
+  phone: string
+  email?: string
+  businessName?: string
+  businessType?: string
+  address?: string
+  potentialValue: number
+  status: LeadStatus
+  agentId: string
+  agentName: string
+  vanId?: string
+  vanCode?: string
+  notes?: string
+  createdAt: Date
+  approvedAt?: Date
+  rejectedAt?: Date
+  syncedToOdoo: boolean
+}
+
+export interface Customer {
+  id: string
+  name: string
+  phone: string
+  email?: string
+  address: string
+  routeId?: string
+  routeName?: string
+  createdFromLeadId?: string
+  salesVolume: number
+  lastOrderDate?: Date
+  createdAt: Date
+}
+
+// Products & Stock
+export interface Product {
+  id: string
+  name: string
+  sku: string
+  unit: string
+  price: number
+  category?: string
+  odooProductId?: string
+}
+
+export interface VanStock {
+  id: string
+  vanId: string
+  vanCode: string
+  productId: string
+  productName: string
+  productSku: string
+  quantity: number
+  unit: string
+  price: number
+  totalValue: number
+  loadedAt: Date
+  lastUpdated: Date
+}
+
+export interface StockHistory {
+  id: string
+  vanId: string
+  vanCode: string
+  productId: string
+  productName: string
+  type: "load" | "sale" | "return" | "damage" | "adjustment"
+  quantityChange: number
+  previousQuantity: number
+  newQuantity: number
+  notes?: string
+  createdAt: Date
+  createdBy: string
+}
+
+// Users & Roles
+export type UserRole = "super_admin" | "manager" | "driver"
+export type UserStatus = "active" | "inactive" | "suspended"
+
+export interface User {
+  id: string
+  name: string
+  email: string
+  phone: string
+  role: UserRole
+  status: UserStatus
+  assignedVanIds: string[]
+  assignedVanCodes: string[]
+  assignedRouteIds: string[]
+  assignedRouteNames: string[]
+  branch?: string
+  createdAt: Date
+  lastLogin?: Date
+}

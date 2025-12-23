@@ -30,7 +30,7 @@ export default function RootLayout({
       >
         <div className="flex h-screen overflow-hidden bg-slate-50">
           <Sidebar />
-          <main className="flex-1 overflow-y-auto lg:pl-72 animate-fade-in">
+          <main className="flex-1 overflow-y-auto lg:pl-20 w-full">
             {children}
           </main>
         </div>

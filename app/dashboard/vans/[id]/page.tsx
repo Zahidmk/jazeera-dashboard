@@ -18,7 +18,7 @@ export default function VanDetailPage() {
   const params = useParams()
   const router = useRouter()
   const vanId = params.id as string
-  
+
   const van = dummyVans.find((v) => v.id === vanId)
   const mainRep = van?.mainRepId ? dummyReps.find((r) => r.id === van.mainRepId) : null
   const vanSyncLogs = dummySyncLogs.filter((log) => log.vanId === vanId).slice(0, 10)
@@ -37,7 +37,7 @@ export default function VanDetailPage() {
     )
   }
 
-  const stockPercentage = van.capacity && van.currentLoad 
+  const stockPercentage = van.capacity && van.currentLoad
     ? Math.round((van.currentLoad / van.capacity) * 100)
     : 0
 
@@ -64,7 +64,7 @@ export default function VanDetailPage() {
     },
   ]
 
-  const timeSinceSync = van.lastSync 
+  const timeSinceSync = van.lastSync
     ? Math.floor((Date.now() - van.lastSync.getTime()) / (1000 * 60))
     : null
 
@@ -87,10 +87,10 @@ export default function VanDetailPage() {
       />
       <div className="p-4 lg:p-6 space-y-6">
         {/* Header Section with Van Code and Status */}
-        <div className="bg-gradient-to-r from-indigo-50 to-indigo-100 rounded-xl p-6 border border-indigo-200">
+        <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="flex items-center gap-4">
-              <div className="h-16 w-16 rounded-xl flex items-center justify-center shadow-lg" style={{ background: 'linear-gradient(to bottom right, #4F46E5, #4338CA)' }}>
+              <div className="h-16 w-16 rounded-xl flex items-center justify-center shadow-lg" style={{ background: 'linear-gradient(to bottom right, #1B60E8, #1450C9)' }}>
                 <Truck className="h-8 w-8 text-white" />
               </div>
               <div>
@@ -112,7 +112,7 @@ export default function VanDetailPage() {
 
         {/* Quick Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="border-l-4" style={{ borderLeftColor: '#4F46E5' }}>
+          <Card className="border-l-4" style={{ borderLeftColor: '#1B60E8' }}>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -120,7 +120,7 @@ export default function VanDetailPage() {
                   <p className="text-2xl font-bold">{stockPercentage}%</p>
                   <p className="text-xs text-muted-foreground mt-1">{van.currentLoad || 0} / {van.capacity} kg</p>
                 </div>
-                <Package className="h-10 w-10 text-indigo-500 opacity-20" />
+                <Package className="h-10 w-10 text-blue-500 opacity-20" />
               </div>
             </CardContent>
           </Card>
@@ -154,7 +154,7 @@ export default function VanDetailPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-l-4" style={{ borderLeftColor: '#8b5cf6' }}>
+          <Card className="border-l-4" style={{ borderLeftColor: '#1B60E8' }}>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -164,7 +164,7 @@ export default function VanDetailPage() {
                     {mainRep ? `${van.relayRepIds?.length || 0} relay reps` : "No rep assigned"}
                   </p>
                 </div>
-                <User className="h-10 w-10 text-purple-500 opacity-20" />
+                <User className="h-10 w-10 text-blue-500 opacity-20" />
               </div>
             </CardContent>
           </Card>
@@ -185,8 +185,8 @@ export default function VanDetailPage() {
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="flex items-start gap-3">
-                    <div className="h-10 w-10 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                      <Truck className="h-5 w-5" style={{ color: '#4F46E5' }} />
+                    <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                      <Truck className="h-5 w-5" style={{ color: '#1B60E8' }} />
                     </div>
                     <div className="flex-1">
                       <p className="text-sm text-muted-foreground mb-1">Van Code</p>
@@ -194,8 +194,8 @@ export default function VanDetailPage() {
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <div className="h-10 w-10 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                      <Calendar className="h-5 w-5" style={{ color: '#4F46E5' }} />
+                    <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                      <Calendar className="h-5 w-5" style={{ color: '#1B60E8' }} />
                     </div>
                     <div className="flex-1">
                       <p className="text-sm text-muted-foreground mb-1">Registration Number</p>
@@ -203,8 +203,8 @@ export default function VanDetailPage() {
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <div className="h-10 w-10 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                      <Building2 className="h-5 w-5" style={{ color: '#4F46E5' }} />
+                    <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                      <Building2 className="h-5 w-5" style={{ color: '#1B60E8' }} />
                     </div>
                     <div className="flex-1">
                       <p className="text-sm text-muted-foreground mb-1">Branch</p>
@@ -212,8 +212,8 @@ export default function VanDetailPage() {
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <div className="h-10 w-10 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                      <Route className="h-5 w-5" style={{ color: '#4F46E5' }} />
+                    <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                      <Route className="h-5 w-5" style={{ color: '#1B60E8' }} />
                     </div>
                     <div className="flex-1">
                       <p className="text-sm text-muted-foreground mb-1">Route</p>
@@ -221,8 +221,8 @@ export default function VanDetailPage() {
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <div className="h-10 w-10 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                      <Weight className="h-5 w-5" style={{ color: '#4F46E5' }} />
+                    <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                      <Weight className="h-5 w-5" style={{ color: '#1B60E8' }} />
                     </div>
                     <div className="flex-1">
                       <p className="text-sm text-muted-foreground mb-1">Total Capacity</p>
@@ -230,7 +230,7 @@ export default function VanDetailPage() {
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <div className="h-10 w-10 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                    <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
                       {van.inventoryLoaded ? (
                         <CheckCircle2 className="h-5 w-5 text-green-500" />
                       ) : (
@@ -262,17 +262,16 @@ export default function VanDetailPage() {
                   <div>
                     <div className="flex justify-between items-center mb-3">
                       <span className="text-sm font-medium text-slate-700">Stock Utilization</span>
-                      <span className="text-sm font-bold" style={{ color: '#4F46E5' }}>
+                      <span className="text-sm font-bold" style={{ color: '#1B60E8' }}>
                         {stockPercentage}%
                       </span>
                     </div>
                     <div className="w-full bg-slate-200 rounded-full h-4 overflow-hidden">
-                      <div 
-                        className={`h-4 rounded-full transition-all ${
-                          stockPercentage > 80 ? "bg-red-500" :
-                          stockPercentage > 50 ? "bg-yellow-500" :
-                          "bg-green-500"
-                        }`}
+                      <div
+                        className={`h-4 rounded-full transition-all ${stockPercentage > 80 ? "bg-red-500" :
+                            stockPercentage > 50 ? "bg-yellow-500" :
+                              "bg-green-500"
+                          }`}
                         style={{ width: `${stockPercentage}%` }}
                       />
                     </div>
@@ -285,7 +284,7 @@ export default function VanDetailPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="p-4 rounded-lg bg-slate-50">
                       <p className="text-sm text-muted-foreground mb-2">Available Capacity</p>
-                      <p className="text-2xl font-bold" style={{ color: '#4F46E5' }}>
+                      <p className="text-2xl font-bold" style={{ color: '#1B60E8' }}>
                         {van.capacity - (van.currentLoad || 0)} kg
                       </p>
                     </div>
@@ -333,7 +332,7 @@ export default function VanDetailPage() {
                 {mainRep ? (
                   <div className="space-y-4">
                     <div className="flex items-center gap-3 pb-4 border-b">
-                      <div className="h-12 w-12 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg">
+                      <div className="h-12 w-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold text-lg">
                         {mainRep.name.split(' ').map(n => n[0]).join('')}
                       </div>
                       <div className="flex-1">
@@ -396,9 +395,9 @@ export default function VanDetailPage() {
                     </p>
                     {timeSinceSync && (
                       <p className="text-xs text-muted-foreground mt-1">
-                        {timeSinceSync < 60 ? `${timeSinceSync} minutes ago` : 
-                         timeSinceSync < 1440 ? `${Math.floor(timeSinceSync / 60)} hours ago` : 
-                         `${Math.floor(timeSinceSync / 1440)} days ago`}
+                        {timeSinceSync < 60 ? `${timeSinceSync} minutes ago` :
+                          timeSinceSync < 1440 ? `${Math.floor(timeSinceSync / 60)} hours ago` :
+                            `${Math.floor(timeSinceSync / 1440)} days ago`}
                       </p>
                     )}
                   </div>

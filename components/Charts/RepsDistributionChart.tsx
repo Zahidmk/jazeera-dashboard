@@ -8,7 +8,7 @@ interface RepsDistributionChartProps {
   reps: Rep[]
 }
 
-const COLORS = ["#4F46E5", "#f59e0b", "#ef4444", "#8b5cf6"]
+const COLORS = ["#1B60E8", "#f59e0b", "#ef4444", "#10B981"]
 
 export function RepsDistributionChart({ reps }: RepsDistributionChartProps) {
   // Calculate distribution by status

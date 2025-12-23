@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Bell, Search, ChevronRight } from "lucide-react"
+import { Bell, Search, ChevronRight, Settings, User } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 
@@ -13,53 +13,44 @@ interface TopbarProps {
 
 export function Topbar({ title, actions, breadcrumbs }: TopbarProps) {
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-white/80 backdrop-blur-lg supports-[backdrop-filter]:bg-white/80 shadow-sm">
-      <div className="flex flex-col sm:flex-row h-auto sm:h-20 items-start sm:items-center justify-between px-4 sm:px-6 lg:px-8 py-3 sm:py-0 gap-3 sm:gap-0">
-        <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
-          {breadcrumbs && breadcrumbs.length > 0 && (
-            <div className="hidden md:flex items-center gap-2 text-sm text-slate-600">
-              {breadcrumbs.map((crumb, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  {index > 0 && <ChevronRight className="h-4 w-4 text-slate-400" />}
-                  {crumb.href ? (
-                    <a href={crumb.href} className="hover:text-slate-900 transition-colors">
-                      {crumb.label}
-                    </a>
-                  ) : (
-                    <span className={cn(index === breadcrumbs.length - 1 && "text-slate-900 font-medium")}>
-                      {crumb.label}
-                    </span>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-          <div className="min-w-0">
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 truncate">{title}</h1>
-            <p className="text-xs sm:text-sm text-slate-500 mt-0.5 hidden sm:block">Manage your middleware system</p>
-          </div>
+    <header className="sticky top-0 z-40 w-full border-b border-gray-200 bg-white">
+      <div className="flex h-14 sm:h-16 items-center justify-between px-3 sm:px-4 lg:px-6 gap-2 sm:gap-4">
+        {/* Left: Title */}
+        <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-shrink-0">
+          <h1 className="text-base sm:text-lg lg:text-xl font-bold text-gray-900 truncate">{title}</h1>
         </div>
-        <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-end">
-          <div className="hidden sm:flex items-center gap-2">{actions}</div>
-          <div className="hidden lg:flex items-center gap-2 border rounded-lg px-3 py-2 bg-slate-50">
-            <Search className="h-4 w-4 text-slate-400" />
+
+        {/* Center: Search - Hidden on mobile */}
+        <div className="hidden md:flex flex-1 max-w-md">
+          <div className="relative w-full">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
               type="search"
-              placeholder="Search..."
-              className="border-0 bg-transparent h-auto p-0 w-32 focus-visible:ring-0 focus-visible:ring-offset-0"
+              placeholder="Start searching here..."
+              className="pl-10 bg-gray-50 border-gray-200 h-10 focus-visible:ring-blue-500 w-full"
             />
           </div>
-          <Button variant="ghost" size="icon" className="relative">
-            <Bell className="h-5 w-5" />
-            <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500" />
+        </div>
+
+        {/* Right: Actions */}
+        <div className="flex items-center gap-1 sm:gap-2">
+          {actions && <div className="hidden lg:flex items-center gap-2">{actions}</div>}
+
+          <Button variant="ghost" size="icon" className="relative hover:bg-gray-100 rounded-lg h-8 w-8 sm:h-10 sm:w-10">
+            <Bell className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" />
+            <span className="absolute top-1 right-1 sm:top-1.5 sm:right-1.5 h-2 w-2 rounded-full bg-blue-500" />
+          </Button>
+
+          <Button variant="ghost" size="icon" className="hidden sm:flex hover:bg-gray-100 rounded-lg h-8 w-8 sm:h-10 sm:w-10">
+            <Settings className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" />
+          </Button>
+
+          <Button variant="ghost" size="icon" className="hover:bg-gray-100 rounded-lg h-8 w-8 sm:h-10 sm:w-10">
+            <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-gray-200 flex items-center justify-center">
+              <User className="h-3 w-3 sm:h-4 sm:w-4 text-gray-600" />
+            </div>
           </Button>
         </div>
-        {/* Mobile Actions */}
-        {actions && (
-          <div className="flex sm:hidden items-center gap-2 w-full">
-            {actions}
-          </div>
-        )}
       </div>
     </header>
   )

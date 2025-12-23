@@ -19,7 +19,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
             "border-2 border-slate-300 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-400": variant === "outline",
             "bg-slate-100 text-slate-700 hover:bg-slate-200": variant === "secondary",
             "hover:bg-slate-100 text-slate-700": variant === "ghost",
-            "text-indigo-600 underline-offset-4 hover:underline": variant === "link",
+            "text-blue-600 underline-offset-4 hover:underline": variant === "link",
           },
           {
             "h-10 px-4 py-2": size === "default",
@@ -29,7 +29,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           },
           className
         )}
-        style={variant === "default" ? { background: 'linear-gradient(to right, #4F46E5, #4338CA)' } : undefined}
+        style={variant === "default" ? { background: 'linear-gradient(to right, #1B60E8, #1450C9)' } : undefined}
         ref={ref}
         {...props}
       />

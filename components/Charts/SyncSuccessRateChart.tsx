@@ -59,11 +59,11 @@ export function SyncSuccessRateChart({ syncLogs }: SyncSuccessRateChartProps) {
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis 
-                dataKey="hour" 
+              <XAxis
+                dataKey="hour"
                 tick={{ fontSize: 12 }}
               />
-              <YAxis 
+              <YAxis
                 tick={{ fontSize: 12 }}
                 width={50}
                 domain={[0, 100]}
@@ -74,10 +74,10 @@ export function SyncSuccessRateChart({ syncLogs }: SyncSuccessRateChartProps) {
                 contentStyle={{ fontSize: 12 }}
               />
               <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Line 
-                type="monotone" 
-                dataKey="successRate" 
-                stroke="#4F46E5" 
+              <Line
+                type="monotone"
+                dataKey="successRate"
+                stroke="#1B60E8"
                 strokeWidth={2}
                 name="Success Rate (%)"
                 dot={{ r: 4 }}

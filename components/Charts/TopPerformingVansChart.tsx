@@ -14,7 +14,7 @@ export function TopPerformingVansChart({ vans }: TopPerformingVansChartProps) {
     .filter((van) => van.status === "active")
     .map((van) => ({
       vanCode: van.vanCode,
-      performance: van.currentLoad && van.capacity 
+      performance: van.currentLoad && van.capacity
         ? Math.round((van.currentLoad / van.capacity) * 100)
         : 0,
       deliveries: Math.floor(Math.random() * 50) + 20, // Mock delivery count
@@ -33,11 +33,11 @@ export function TopPerformingVansChart({ vans }: TopPerformingVansChartProps) {
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={performanceData}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis 
-                dataKey="vanCode" 
+              <XAxis
+                dataKey="vanCode"
                 tick={{ fontSize: 12 }}
               />
-              <YAxis 
+              <YAxis
                 tick={{ fontSize: 12 }}
                 width={50}
               />
@@ -50,7 +50,7 @@ export function TopPerformingVansChart({ vans }: TopPerformingVansChartProps) {
                 contentStyle={{ fontSize: 12 }}
               />
               <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Bar dataKey="performance" fill="#4F46E5" radius={[8, 8, 0, 0]} name="Utilization %" />
+              <Bar dataKey="performance" fill="#1B60E8" radius={[8, 8, 0, 0]} name="Utilization %" />
               <Bar dataKey="deliveries" fill="#f59e0b" radius={[8, 8, 0, 0]} name="Deliveries" />
             </BarChart>
           </ResponsiveContainer>

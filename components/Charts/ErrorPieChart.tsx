@@ -10,7 +10,7 @@ interface ErrorPieChartProps {
   }>
 }
 
-const COLORS = ["#ef4444", "#f59e0b", "#4F46E5", "#4F46E5", "#8b5cf6"]
+const COLORS = ["#ef4444", "#f59e0b", "#1B60E8", "#1B60E8", "#10B981"]
 
 export function ErrorPieChart({ data }: ErrorPieChartProps) {
   return (
@@ -38,7 +38,7 @@ export function ErrorPieChart({ data }: ErrorPieChartProps) {
                 ))}
               </Pie>
               <Tooltip contentStyle={{ fontSize: 12 }} />
-              <Legend 
+              <Legend
                 wrapperStyle={{ fontSize: 12 }}
                 layout="vertical"
                 verticalAlign="middle"

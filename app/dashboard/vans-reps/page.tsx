@@ -25,7 +25,6 @@ import { Plus, Edit, UserPlus, Package, Route, Truck, Eye } from "lucide-react"
 export default function VansRepsPage() {
   const [vans, setVans] = useState(dummyVans)
   const [reps, setReps] = useState(dummyReps)
-  const [branchFilter, setBranchFilter] = useState<string>("all")
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [vanModalOpen, setVanModalOpen] = useState(false)
   const [repModalOpen, setRepModalOpen] = useState(false)
@@ -34,12 +33,9 @@ export default function VansRepsPage() {
   const [selectedRep, setSelectedRep] = useState<Rep | null>(null)
 
   const filteredVans = vans.filter((van) => {
-    if (branchFilter !== "all" && van.branch !== branchFilter) return false
     if (statusFilter !== "all" && van.status !== statusFilter) return false
     return true
   })
-
-  const branches = Array.from(new Set(vans.map((v) => v.branch)))
 
   const vansColumns: Column<Van>[] = [
     {
@@ -75,10 +71,6 @@ export default function VansRepsPage() {
       accessor: (row) => row.routeName || "No Route",
     },
     {
-      header: "Branch",
-      accessor: "branch",
-    },
-    {
       header: "Status",
       accessor: (row) => <StatusBadge status={row.status} />,
     },
@@ -108,11 +100,12 @@ export default function VansRepsPage() {
       header: "Actions",
       accessor: (row) => (
         <div className="flex gap-2">
+          {/* View Details - Will be implemented later */}
           <Button
             variant="ghost"
             size="sm"
             onClick={() => {
-              window.location.href = `/dashboard/vans/${row.id}`
+              window.location.href = `#`
             }}
           >
             <Eye className="h-4 w-4" />
@@ -170,21 +163,8 @@ export default function VansRepsPage() {
       ),
     },
     {
-      header: "Branch",
-      accessor: "branch",
-    },
-    {
       header: "Status",
       accessor: (row) => <StatusBadge status={row.status} />,
-    },
-    {
-      header: "Performance",
-      accessor: (row) => (
-        <div className="text-sm">
-          <div className="font-medium">{row.performance.syncSuccessRate}% sync</div>
-          <div className="text-slate-500">{row.performance.totalSales.toLocaleString()} SAR</div>
-        </div>
-      ),
     },
     {
       header: "Actions",
@@ -209,20 +189,21 @@ export default function VansRepsPage() {
         title="Vans & Reps Management"
         actions={
           <>
-            <Button size="sm" variant="outline" onClick={() => setRepModalOpen(true)}>
+            <Button size="sm" variant="outline" onClick={() => setRepModalOpen(true)} className="hidden sm:flex">
               <Plus className="h-4 w-4 mr-2" />
               Add Rep
             </Button>
             <Button size="sm" onClick={() => setVanModalOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
-              Add Van
+              <span className="hidden sm:inline">Add Van</span>
+              <span className="sm:hidden">Van</span>
             </Button>
           </>
         }
       />
-      <div className="p-6 lg:p-8 space-y-8">
+      <div className="p-3 sm:p-4 lg:p-6 xl:p-8 space-y-4 sm:space-y-6 lg:space-y-8">
         {/* Summary Cards */}
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid gap-3 sm:gap-4 grid-cols-2 md:grid-cols-4">
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-slate-600">Total Vans</CardTitle>
@@ -272,17 +253,6 @@ export default function VansRepsPage() {
         {/* Filters */}
         <div className="flex gap-4 items-center">
           <Select
-            value={branchFilter}
-            onChange={(e) => setBranchFilter(e.target.value)}
-          >
-            <option value="all">All Branches</option>
-            {branches.map((branch) => (
-              <option key={branch} value={branch}>
-                {branch}
-              </option>
-            ))}
-          </Select>
-          <Select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
           >
@@ -294,27 +264,35 @@ export default function VansRepsPage() {
         </div>
 
         {/* Vans Table */}
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           <div className="flex items-center gap-2">
-            <Truck className="h-5 w-5 text-slate-600" />
-            <h2 className="text-xl font-semibold">Vans</h2>
+            <Truck className="h-4 w-4 sm:h-5 sm:w-5 text-slate-600" />
+            <h2 className="text-lg sm:text-xl font-semibold">Vans</h2>
           </div>
-          <DataTable data={filteredVans} columns={vansColumns} />
+          <div className="overflow-x-auto -mx-3 sm:mx-0">
+            <div className="inline-block min-w-full align-middle">
+              <DataTable data={filteredVans} columns={vansColumns} />
+            </div>
+          </div>
         </div>
 
         {/* Reps Table */}
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           <div className="flex items-center gap-2">
-            <UserPlus className="h-5 w-5 text-slate-600" />
-            <h2 className="text-xl font-semibold">Sales Representatives</h2>
+            <UserPlus className="h-4 w-4 sm:h-5 sm:w-5 text-slate-600" />
+            <h2 className="text-lg sm:text-xl font-semibold">Sales Representatives</h2>
           </div>
-          <DataTable data={reps} columns={repsColumns} />
+          <div className="overflow-x-auto -mx-3 sm:mx-0">
+            <div className="inline-block min-w-full align-middle">
+              <DataTable data={reps} columns={repsColumns} />
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Add/Edit Van Modal */}
       <Dialog open={vanModalOpen} onOpenChange={setVanModalOpen}>
-        <DialogContent onClose={() => setVanModalOpen(false)} className="max-w-2xl">
+        <DialogContent onClose={() => setVanModalOpen(false)} className="max-w-[95vw] sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>{selectedVan ? "Edit Van" : "Add Van"}</DialogTitle>
             <DialogDescription>
@@ -341,17 +319,6 @@ export default function VansRepsPage() {
                   className="mt-1"
                 />
               </div>
-            </div>
-            <div>
-              <label className="text-sm font-medium">Branch</label>
-              <Select defaultValue={selectedVan?.branch} className="mt-1">
-                <option value="">Select branch</option>
-                {branches.map((branch) => (
-                  <option key={branch} value={branch}>
-                    {branch}
-                  </option>
-                ))}
-              </Select>
             </div>
             <div>
               <label className="text-sm font-medium">Capacity (kg)</label>
@@ -382,7 +349,7 @@ export default function VansRepsPage() {
 
       {/* Add/Edit Rep Modal */}
       <Dialog open={repModalOpen} onOpenChange={setRepModalOpen}>
-        <DialogContent onClose={() => setRepModalOpen(false)} className="max-w-2xl">
+        <DialogContent onClose={() => setRepModalOpen(false)} className="max-w-[95vw] sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>{selectedRep ? "Edit Rep" : "Add Rep"}</DialogTitle>
             <DialogDescription>
@@ -438,17 +405,6 @@ export default function VansRepsPage() {
               </div>
             </div>
             <div>
-              <label className="text-sm font-medium">Branch</label>
-              <Select defaultValue={selectedRep?.branch} className="mt-1">
-                <option value="">Select branch</option>
-                {branches.map((branch) => (
-                  <option key={branch} value={branch}>
-                    {branch}
-                  </option>
-                ))}
-              </Select>
-            </div>
-            <div>
               <label className="text-sm font-medium">Status</label>
               <Select defaultValue={selectedRep?.status} className="mt-1">
                 <option value="active">Active</option>
@@ -468,7 +424,7 @@ export default function VansRepsPage() {
 
       {/* Assignment Modal */}
       <Dialog open={assignmentModalOpen} onOpenChange={setAssignmentModalOpen}>
-        <DialogContent onClose={() => setAssignmentModalOpen(false)} className="max-w-2xl">
+        <DialogContent onClose={() => setAssignmentModalOpen(false)} className="max-w-[95vw] sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>Assign Rep to Van</DialogTitle>
             <DialogDescription>
