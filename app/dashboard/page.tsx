@@ -1,5 +1,6 @@
 "use client"
 
+import { useRouter } from "next/navigation"
 import { Topbar } from "@/components/Topbar"
 import { DashboardCard } from "@/components/DashboardCard"
 import { ImageCard } from "@/components/ImageCard"
@@ -26,6 +27,7 @@ import { SalesByRouteChart } from "@/components/Charts/SalesByRouteChart"
 import { Van, Rep } from "@/lib/types"
 
 export default function DashboardPage() {
+  const router = useRouter()
   const kpis = getKPIs()
   const salesKPIs = getSalesKPIs()
   const deliveryKPIs = getDeliveryKPIs()
@@ -44,7 +46,7 @@ export default function DashboardPage() {
       accessor: "registrationNumber",
     },
     {
-      header: "Main Rep",
+      header: "Driver",
       accessor: (row) => row.mainRepName || "Unassigned",
     },
     {
@@ -53,12 +55,11 @@ export default function DashboardPage() {
     },
     {
       header: "Status",
-      accessor: (row) => <StatusBadge status={row.status} />,
-    },
-    {
-      header: "Last Sync",
-      accessor: (row) =>
-        row.lastSync ? format(row.lastSync, "MMM dd, yyyy HH:mm") : "Never",
+      accessor: (row) => (
+        <StatusBadge
+          status={row.status === "active" ? "active" : "inactive"}
+        />
+      ),
     },
   ]
 
@@ -68,24 +69,12 @@ export default function DashboardPage() {
       accessor: "name",
     },
     {
-      header: "Assigned Van",
-      accessor: (row) => row.assignedVanCode || "Unassigned",
-    },
-    {
-      header: "Branch",
-      accessor: "branch",
-    },
-    {
-      header: "Status",
-      accessor: (row) => <StatusBadge status={row.status} />,
-    },
-    {
       header: "Phone",
       accessor: "phone",
     },
     {
-      header: "Shift",
-      accessor: (row) => row.shiftTiming || "-",
+      header: "Assigned Van",
+      accessor: (row) => row.assignedVanCode || "Not Assigned",
     },
   ]
 
@@ -95,19 +84,42 @@ export default function DashboardPage() {
         title="Dashboard"
         actions={
           <>
-            <Button size="sm" variant="outline" className="hidden xl:flex">
+            <Button
+              size="sm"
+              variant="outline"
+              className="hidden xl:flex cursor-pointer"
+              onClick={() => router.push('/dashboard/vans-reps')}
+              title="Add new van"
+            >
               <Plus className="h-4 w-4 mr-2" />
               Add Van
             </Button>
-            <Button size="sm" variant="outline" className="hidden xl:flex">
+            <Button
+              size="sm"
+              variant="outline"
+              className="hidden xl:flex cursor-pointer"
+              onClick={() => router.push('/dashboard/routes')}
+              title="Assign route to van"
+            >
               <Plus className="h-4 w-4 mr-2" />
               Assign Route
             </Button>
-            <Button size="sm" variant="outline" className="hidden 2xl:flex">
+            <Button
+              size="sm"
+              variant="outline"
+              className="hidden 2xl:flex cursor-pointer"
+              onClick={() => router.push('/dashboard/stock')}
+              title="Load stock to van"
+            >
               <Package className="h-4 w-4 mr-2" />
               Load Stock
             </Button>
-            <Button size="sm">
+            <Button
+              size="sm"
+              className="cursor-pointer"
+              onClick={() => router.push('/dashboard/sync')}
+              title="Sync data now"
+            >
               <RefreshCw className="h-4 w-4 mr-2" />
               <span className="hidden sm:inline">Sync Now</span>
               <span className="sm:hidden">Sync</span>
@@ -148,9 +160,9 @@ export default function DashboardPage() {
               trend={{ value: 15, isPositive: true }}
             />
             <DashboardCard
-              title="Deliveries"
+              title="Van Deliveries"
               value={`${deliveryKPIs.completed} / ${deliveryKPIs.completed + deliveryKPIs.pending}`}
-              icon={<ShoppingCart className="h-5 w-5" />}
+              icon={<Truck className="h-5 w-5" />}
               variant="green"
               trend={{ value: 5, isPositive: true }}
             />
@@ -161,8 +173,8 @@ export default function DashboardPage() {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-bold text-gray-900">Team & Leads</h2>
-              <p className="text-xs text-gray-500 mt-0.5">Manage your team and customer leads</p>
+              <h2 className="text-xl font-bold text-gray-900">Van Operations</h2>
+              <p className="text-xs text-gray-500 mt-0.5">Monitor vans, drivers, and routes</p>
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -173,7 +185,7 @@ export default function DashboardPage() {
               variant="blue"
             />
             <DashboardCard
-              title="Active Reps"
+              title="Van Drivers"
               value={kpis.activeReps}
               icon={<Users className="h-5 w-5" />}
               variant="blue"
@@ -217,7 +229,7 @@ export default function DashboardPage() {
         {/* Base Vans Table */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg sm:text-xl font-semibold">Base Vans</h2>
+            <h2 className="text-lg sm:text-xl font-semibold">Active Vans</h2>
           </div>
           <div className="overflow-x-auto">
             <DataTable data={dummyVans} columns={vansColumns} />
@@ -227,7 +239,7 @@ export default function DashboardPage() {
         {/* Base Reps Table */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg sm:text-xl font-semibold">Base Representatives</h2>
+            <h2 className="text-lg sm:text-xl font-semibold">Van Drivers</h2>
           </div>
           <div className="overflow-x-auto">
             <DataTable data={baseReps} columns={repsColumns} />

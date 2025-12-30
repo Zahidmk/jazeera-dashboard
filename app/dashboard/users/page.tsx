@@ -213,43 +213,90 @@ export default function UsersPage() {
 
       {/* Assignment Modal */}
       <Dialog open={assignmentModalOpen} onOpenChange={setAssignmentModalOpen}>
-        <DialogContent onClose={() => setAssignmentModalOpen(false)}>
+        <DialogContent onClose={() => setAssignmentModalOpen(false)} className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Assign Vans & Routes</DialogTitle>
             <DialogDescription>
               Assign vans and routes to {selectedUser?.name}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div>
+          <div className="space-y-6 py-4">
+            {/* Select Vans */}
+            <div className="space-y-3">
               <label className="text-sm font-medium">Select Vans</label>
-              <Select className="mt-1" multiple>
-                {dummyVans.map((van) => (
-                  <option key={van.id} value={van.id}>
-                    {van.vanCode} - {van.registrationNumber}
-                  </option>
-                ))}
-              </Select>
+              <div className="border rounded-lg p-3 max-h-60 overflow-y-auto bg-gray-50">
+                <div className="space-y-2">
+                  {dummyVans.map((van) => (
+                    <label
+                      key={van.id}
+                      className="flex items-center gap-3 p-2 hover:bg-white rounded-md cursor-pointer transition-colors"
+                    >
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                        defaultChecked={selectedUser?.assignedVanCodes.includes(van.vanCode)}
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-sm">{van.vanCode}</span>
+                          <span className="text-xs text-gray-500">•</span>
+                          <span className="text-sm text-gray-600">{van.registrationNumber}</span>
+                        </div>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-xs text-gray-500">{van.branch}</span>
+                          {van.status === "active" ? (
+                            <span className="text-xs px-1.5 py-0.5 bg-green-100 text-green-700 rounded">Active</span>
+                          ) : (
+                            <span className="text-xs px-1.5 py-0.5 bg-gray-100 text-gray-700 rounded">Inactive</span>
+                          )}
+                        </div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <p className="text-xs text-gray-500">
+                {dummyVans.filter(v => v.status === "active").length} active vans available
+              </p>
             </div>
-            <div>
+
+            {/* Select Routes */}
+            <div className="space-y-3">
               <label className="text-sm font-medium">Select Routes</label>
-              <Select className="mt-1" multiple>
-                {dummyRoutes.map((route) => (
-                  <option key={route.id} value={route.id}>
-                    {route.name}
-                  </option>
-                ))}
-              </Select>
+              <div className="border rounded-lg p-3 max-h-60 overflow-y-auto bg-gray-50">
+                <div className="space-y-2">
+                  {dummyRoutes.map((route) => (
+                    <label
+                      key={route.id}
+                      className="flex items-center gap-3 p-2 hover:bg-white rounded-md cursor-pointer transition-colors"
+                    >
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-sm">{route.name}</span>
+                        </div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <p className="text-xs text-gray-500">
+                {dummyRoutes.length} routes available
+              </p>
             </div>
           </div>
           <DialogFooter>
             <Button
               variant="outline"
               onClick={() => setAssignmentModalOpen(false)}
+              className="cursor-pointer"
             >
               Cancel
             </Button>
-            <Button onClick={() => setAssignmentModalOpen(false)}>
+            <Button onClick={() => setAssignmentModalOpen(false)} className="cursor-pointer">
               Assign
             </Button>
           </DialogFooter>

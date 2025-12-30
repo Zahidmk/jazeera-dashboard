@@ -44,6 +44,13 @@ export default function StockPage() {
       accessor: "vanCode",
     },
     {
+      header: "Driver",
+      accessor: (row) => {
+        const van = dummyVans.find(v => v.id === row.vanId)
+        return van?.mainRepName || "Unassigned"
+      },
+    },
+    {
       header: "Product",
       accessor: "productName",
     },
@@ -54,6 +61,20 @@ export default function StockPage() {
     {
       header: "Quantity",
       accessor: (row) => `${row.quantity} ${row.unit}`,
+    },
+    {
+      header: "Status",
+      accessor: (row) => {
+        if (row.quantity === 0) {
+          return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800">Out of Stock</span>
+        } else if (row.quantity < 10) {
+          return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-orange-100 text-orange-800">Low Stock</span>
+        } else if (row.quantity > 50) {
+          return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">Overstocked</span>
+        } else {
+          return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800">Optimal</span>
+        }
+      },
     },
     {
       header: "Unit Price",
@@ -78,6 +99,8 @@ export default function StockPage() {
               setSelectedStock(row)
               setAdjustStockModalOpen(true)
             }}
+            className="cursor-pointer"
+            title="Adjust stock quantity"
           >
             Adjust
           </Button>
@@ -88,6 +111,8 @@ export default function StockPage() {
               setSelectedStock(row)
               setHistoryModalOpen(true)
             }}
+            className="cursor-pointer"
+            title="View stock history"
           >
             History
           </Button>
@@ -101,15 +126,77 @@ export default function StockPage() {
       <Topbar
         title="Van Stock Management"
         actions={
-          <Button size="sm" onClick={() => {
-            setLoadStockModalOpen(true)
-          }}>
+          <Button
+            size="sm"
+            onClick={() => setLoadStockModalOpen(true)}
+            className="cursor-pointer"
+            title="Load stock into van"
+          >
             <Plus className="h-4 w-4 mr-2" />
             Load Stock
           </Button>
         }
       />
       <div className="p-4 lg:p-6 space-y-6">
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-slate-600">Vans with Stock</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {new Set(stock.map(s => s.vanId)).size}
+              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                out of {dummyVans.length} total vans
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-slate-600">Total Stock Value</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                SAR {stock.reduce((sum, s) => sum + s.totalValue, 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                across all vans
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-slate-600">Low Stock Items</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-orange-600">
+                {lowStockItems.length}
+              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                need restocking
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-slate-600">Total Products</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {stock.reduce((sum, s) => sum + s.quantity, 0)}
+              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                items in stock
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Low Stock Alerts */}
         {lowStockItems.length > 0 && (
           <Card className="border-orange-200 bg-orange-50">
@@ -202,10 +289,19 @@ export default function StockPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setLoadStockModalOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setLoadStockModalOpen(false)}
+              className="cursor-pointer"
+            >
               Cancel
             </Button>
-            <Button onClick={() => setLoadStockModalOpen(false)}>Load Stock</Button>
+            <Button
+              onClick={() => setLoadStockModalOpen(false)}
+              className="cursor-pointer"
+            >
+              Load Stock
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -254,10 +350,19 @@ export default function StockPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setAdjustStockModalOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setAdjustStockModalOpen(false)}
+              className="cursor-pointer"
+            >
               Cancel
             </Button>
-            <Button onClick={() => setAdjustStockModalOpen(false)}>Save Adjustment</Button>
+            <Button
+              onClick={() => setAdjustStockModalOpen(false)}
+              className="cursor-pointer"
+            >
+              Save Adjustment
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -297,7 +402,11 @@ export default function StockPage() {
               ))}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setHistoryModalOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setHistoryModalOpen(false)}
+              className="cursor-pointer"
+            >
               Close
             </Button>
           </DialogFooter>

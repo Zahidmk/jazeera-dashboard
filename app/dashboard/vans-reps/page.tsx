@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Topbar } from "@/components/Topbar"
 import { DataTable, Column } from "@/components/DataTable"
 import { StatusBadge } from "@/components/StatusBadge"
@@ -20,9 +21,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { dummyVans, dummyReps, dummyRelayReps } from "@/lib/dummy-data"
 import { Van, Rep } from "@/lib/types"
 import { format } from "date-fns"
-import { Plus, Edit, UserPlus, Package, Route, Truck, Eye } from "lucide-react"
+import { Plus, Edit, UserPlus, Package, Route, Truck, Eye, Users } from "lucide-react"
 
 export default function VansRepsPage() {
+  const router = useRouter()
   const [vans, setVans] = useState(dummyVans)
   const [reps, setReps] = useState(dummyReps)
   const [statusFilter, setStatusFilter] = useState<string>("all")
@@ -47,25 +49,10 @@ export default function VansRepsPage() {
       accessor: "registrationNumber",
     },
     {
-      header: "Main Rep",
+      header: "Driver",
       accessor: (row) => row.mainRepName || "Unassigned",
     },
-    {
-      header: "Relay Reps",
-      accessor: (row) => (
-        <div className="flex flex-wrap gap-1">
-          {row.relayRepNames.length > 0 ? (
-            row.relayRepNames.map((name, idx) => (
-              <Badge key={idx} variant="secondary" className="text-xs">
-                {name}
-              </Badge>
-            ))
-          ) : (
-            <span className="text-slate-400 text-sm">None</span>
-          )}
-        </div>
-      ),
-    },
+
     {
       header: "Route",
       accessor: (row) => row.routeName || "No Route",
@@ -100,13 +87,13 @@ export default function VansRepsPage() {
       header: "Actions",
       accessor: (row) => (
         <div className="flex gap-2">
-          {/* View Details - Will be implemented later */}
+          {/* View Details */}
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => {
-              window.location.href = `#`
-            }}
+            onClick={() => router.push(`/dashboard/vans/${row.id}`)}
+            title="View van details"
+            className="cursor-pointer"
           >
             <Eye className="h-4 w-4" />
           </Button>
@@ -117,6 +104,8 @@ export default function VansRepsPage() {
               setSelectedVan(row)
               setVanModalOpen(true)
             }}
+            title="Edit van details"
+            className="cursor-pointer"
           >
             <Edit className="h-4 w-4" />
           </Button>
@@ -127,6 +116,8 @@ export default function VansRepsPage() {
               setSelectedVan(row)
               setAssignmentModalOpen(true)
             }}
+            title="Assign van to reps"
+            className="cursor-pointer"
           >
             <UserPlus className="h-4 w-4" />
           </Button>
@@ -143,14 +134,6 @@ export default function VansRepsPage() {
     {
       header: "Phone",
       accessor: "phone",
-    },
-    {
-      header: "Role",
-      accessor: (row) => (
-        <Badge variant={row.role === "main" ? "default" : "secondary"}>
-          {row.role === "main" ? "Main Rep" : "Relay Rep"}
-        </Badge>
-      ),
     },
     {
       header: "Assigned Van",
@@ -176,6 +159,8 @@ export default function VansRepsPage() {
             setSelectedRep(row)
             setRepModalOpen(true)
           }}
+          title="Edit driver details"
+          className="cursor-pointer"
         >
           <Edit className="h-4 w-4" />
         </Button>
@@ -186,17 +171,27 @@ export default function VansRepsPage() {
   return (
     <div className="min-h-screen bg-background">
       <Topbar
-        title="Vans & Reps Management"
+        title="Vans & Reps"
         actions={
           <>
-            <Button size="sm" variant="outline" onClick={() => setRepModalOpen(true)} className="hidden sm:flex">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setRepModalOpen(true)}
+              className="hidden sm:flex cursor-pointer"
+              title="Add new driver"
+            >
               <Plus className="h-4 w-4 mr-2" />
-              Add Rep
+              Add Driver
             </Button>
-            <Button size="sm" onClick={() => setVanModalOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
+            <Button
+              size="sm"
+              onClick={() => setVanModalOpen(true)}
+              className="cursor-pointer"
+              title="Add new van"
+            >
+              <Plus className="h-4 w-4 sm:mr-2" />
               <span className="hidden sm:inline">Add Van</span>
-              <span className="sm:hidden">Van</span>
             </Button>
           </>
         }
@@ -217,7 +212,7 @@ export default function VansRepsPage() {
           </Card>
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-slate-600">Total Reps</CardTitle>
+              <CardTitle className="text-sm font-medium text-slate-600">Van Drivers</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{reps.length}</div>
@@ -276,11 +271,11 @@ export default function VansRepsPage() {
           </div>
         </div>
 
-        {/* Reps Table */}
+        {/* Van Drivers Table */}
         <div className="space-y-3 sm:space-y-4">
           <div className="flex items-center gap-2">
-            <UserPlus className="h-4 w-4 sm:h-5 sm:w-5 text-slate-600" />
-            <h2 className="text-lg sm:text-xl font-semibold">Sales Representatives</h2>
+            <Users className="h-4 w-4 sm:h-5 sm:w-5 text-slate-600" />
+            <h2 className="text-lg sm:text-xl font-semibold">Van Drivers</h2>
           </div>
           <div className="overflow-x-auto -mx-3 sm:mx-0">
             <div className="inline-block min-w-full align-middle">
@@ -339,10 +334,10 @@ export default function VansRepsPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setVanModalOpen(false)}>
+            <Button variant="outline" onClick={() => setVanModalOpen(false)} className="cursor-pointer">
               Cancel
             </Button>
-            <Button onClick={() => setVanModalOpen(false)}>Save</Button>
+            <Button onClick={() => setVanModalOpen(false)} className="cursor-pointer">Save</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -351,11 +346,11 @@ export default function VansRepsPage() {
       <Dialog open={repModalOpen} onOpenChange={setRepModalOpen}>
         <DialogContent onClose={() => setRepModalOpen(false)} className="max-w-[95vw] sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>{selectedRep ? "Edit Rep" : "Add Rep"}</DialogTitle>
+            <DialogTitle>{selectedRep ? "Edit Driver" : "Add Driver"}</DialogTitle>
             <DialogDescription>
               {selectedRep
-                ? "Update representative information"
-                : "Create a new representative entry"}
+                ? "Update driver information"
+                : "Add a new van driver"}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -388,16 +383,8 @@ export default function VansRepsPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium">Role</label>
-                <Select defaultValue={selectedRep?.role} className="mt-1">
-                  <option value="main">Main Rep</option>
-                  <option value="relay">Relay Rep</option>
-                </Select>
-              </div>
-              <div>
-                <label className="text-sm font-medium">Shift Timing</label>
+                <label className="text-sm font-medium">Shift</label>
                 <Select defaultValue={selectedRep?.shiftTiming} className="mt-1">
-                  <option value="full-day">Full Day</option>
                   <option value="morning">Morning</option>
                   <option value="evening">Evening</option>
                   <option value="night">Night</option>
@@ -414,10 +401,10 @@ export default function VansRepsPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setRepModalOpen(false)}>
+            <Button variant="outline" onClick={() => setRepModalOpen(false)} className="cursor-pointer">
               Cancel
             </Button>
-            <Button onClick={() => setRepModalOpen(false)}>Save</Button>
+            <Button onClick={() => setRepModalOpen(false)} className="cursor-pointer">Save</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -465,10 +452,11 @@ export default function VansRepsPage() {
             <Button
               variant="outline"
               onClick={() => setAssignmentModalOpen(false)}
+              className="cursor-pointer"
             >
               Cancel
             </Button>
-            <Button onClick={() => setAssignmentModalOpen(false)}>
+            <Button onClick={() => setAssignmentModalOpen(false)} className="cursor-pointer">
               Save Assignments
             </Button>
           </DialogFooter>

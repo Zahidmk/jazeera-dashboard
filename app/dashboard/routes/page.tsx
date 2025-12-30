@@ -14,9 +14,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { dummyRoutes, dummyVans, dummyReps } from "@/lib/dummy-data"
 import { Route } from "@/lib/types"
-import { Plus, Edit, MapPin } from "lucide-react"
+import { Plus, Edit, MapPin, Truck, Users, Store } from "lucide-react"
 
 export default function RoutesPage() {
   const [routes, setRoutes] = useState(dummyRoutes)
@@ -28,6 +29,11 @@ export default function RoutesPage() {
     if (vanFilter !== "all" && route.vanId !== vanFilter) return false
     return true
   })
+
+  // Calculate stats
+  const assignedRoutes = routes.filter(r => r.vanId).length
+  const unassignedRoutes = routes.length - assignedRoutes
+  const totalShops = routes.reduce((sum, r) => sum + r.shopCount, 0)
 
   const routesColumns: Column<Route>[] = [
     {
@@ -53,6 +59,16 @@ export default function RoutesPage() {
       accessor: "shopCount",
     },
     {
+      header: "Status",
+      accessor: (row) => {
+        if (!row.vanId) {
+          return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-800">Unassigned</span>
+        } else {
+          return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800">Assigned</span>
+        }
+      },
+    },
+    {
       header: "Actions",
       accessor: (row) => (
         <div className="flex gap-2">
@@ -63,6 +79,8 @@ export default function RoutesPage() {
               setSelectedRoute(row)
               setRouteModalOpen(true)
             }}
+            className="cursor-pointer"
+            title="Edit route"
           >
             <Edit className="h-4 w-4" />
           </Button>
@@ -76,16 +94,80 @@ export default function RoutesPage() {
       <Topbar
         title="Route Management"
         actions={
-          <Button size="sm" onClick={() => {
-            setSelectedRoute(null)
-            setRouteModalOpen(true)
-          }}>
+          <Button
+            size="sm"
+            onClick={() => {
+              setSelectedRoute(null)
+              setRouteModalOpen(true)
+            }}
+            className="cursor-pointer"
+            title="Create new route"
+          >
             <Plus className="h-4 w-4 mr-2" />
             Create Route
           </Button>
         }
       />
       <div className="p-4 lg:p-6 space-y-6">
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-slate-600">Total Routes</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {routes.length}
+              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                active routes
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-slate-600">Assigned Routes</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">
+                {assignedRoutes}
+              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                routes with vans
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-slate-600">Unassigned Routes</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-orange-600">
+                {unassignedRoutes}
+              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                need assignment
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-slate-600">Total Shops</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {totalShops}
+              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                across all routes
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Filters */}
         <div className="flex gap-4 items-center">
           <Select
@@ -133,7 +215,7 @@ export default function RoutesPage() {
                 <option value="">Select van</option>
                 {dummyVans.map((van) => (
                   <option key={van.id} value={van.id}>
-                    {van.vanCode} - {van.registrationNumber}
+                    {van.vanCode} - {van.mainRepName || "No Driver"}
                   </option>
                 ))}
               </Select>
@@ -149,10 +231,19 @@ export default function RoutesPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setRouteModalOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setRouteModalOpen(false)}
+              className="cursor-pointer"
+            >
               Cancel
             </Button>
-            <Button onClick={() => setRouteModalOpen(false)}>Save</Button>
+            <Button
+              onClick={() => setRouteModalOpen(false)}
+              className="cursor-pointer"
+            >
+              Save
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

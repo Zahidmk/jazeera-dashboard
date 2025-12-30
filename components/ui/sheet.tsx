@@ -22,7 +22,7 @@ const Sheet = ({ open, onOpenChange, side = "right", children }: SheetProps) => 
       />
       <div
         className={cn(
-          "fixed z-50 bg-white border border-slate-200 shadow-lg transition-transform",
+          "fixed z-50 bg-black/30 border border-slate-200 shadow-lg transition-transform",
           {
             "inset-y-0 left-0 w-full sm:max-w-sm": side === "left",
             "inset-y-0 right-0 w-full sm:max-w-sm": side === "right",

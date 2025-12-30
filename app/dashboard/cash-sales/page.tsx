@@ -14,23 +14,24 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { dummyCashSales, dummyVans, dummyReps } from "@/lib/dummy-data"
 import { CashSale } from "@/lib/types"
 import { format } from "date-fns"
-import { Eye, Download } from "lucide-react"
+import { Eye, Download, DollarSign, CreditCard, Wallet, TrendingUp } from "lucide-react"
 
 export default function CashSalesPage() {
   const [sales, setSales] = useState(dummyCashSales)
   const [dateFilter, setDateFilter] = useState<string>("all")
   const [vanFilter, setVanFilter] = useState<string>("all")
-  const [agentFilter, setAgentFilter] = useState<string>("all")
+  const [driverFilter, setDriverFilter] = useState<string>("all")
   const [receiptModalOpen, setReceiptModalOpen] = useState(false)
   const [selectedSale, setSelectedSale] = useState<CashSale | null>(null)
 
   const filteredSales = sales.filter((sale) => {
     if (vanFilter !== "all" && sale.vanId !== vanFilter) return false
-    if (agentFilter !== "all" && sale.driverId !== agentFilter) return false
-    
+    if (driverFilter !== "all" && sale.driverId !== driverFilter) return false
+
     if (dateFilter === "today") {
       const today = new Date()
       today.setHours(0, 0, 0, 0)
@@ -40,9 +41,15 @@ export default function CashSalesPage() {
       weekAgo.setDate(weekAgo.getDate() - 7)
       if (sale.createdAt < weekAgo) return false
     }
-    
+
     return true
   })
+
+  // Calculate stats
+  const totalSales = filteredSales.reduce((sum, sale) => sum + sale.totalAmount, 0)
+  const cashSales = filteredSales.filter(s => s.paymentMethod === "cash").reduce((sum, s) => sum + s.totalAmount, 0)
+  const cardSales = filteredSales.filter(s => s.paymentMethod === "card").reduce((sum, s) => sum + s.totalAmount, 0)
+  const avgSale = filteredSales.length > 0 ? totalSales / filteredSales.length : 0
 
   const salesColumns: Column<CashSale>[] = [
     {
@@ -74,7 +81,7 @@ export default function CashSalesPage() {
       accessor: "vanCode",
     },
     {
-      header: "Agent",
+      header: "Driver",
       accessor: "driverName",
     },
     {
@@ -88,6 +95,8 @@ export default function CashSalesPage() {
               setSelectedSale(row)
               setReceiptModalOpen(true)
             }}
+            className="cursor-pointer"
+            title="View receipt"
           >
             <Eye className="h-4 w-4" />
           </Button>
@@ -99,7 +108,7 @@ export default function CashSalesPage() {
   const handleExport = () => {
     // Export functionality placeholder
     const csv = [
-      ["Sale ID", "Customer", "Amount", "Payment Method", "Date", "Van", "Agent"],
+      ["Sale ID", "Customer", "Amount", "Payment Method", "Date", "Van", "Driver"],
       ...filteredSales.map((sale) => [
         sale.saleNumber,
         sale.customerName,
@@ -126,13 +135,78 @@ export default function CashSalesPage() {
       <Topbar
         title="Cash Sales & Payments"
         actions={
-          <Button size="sm" variant="outline" onClick={handleExport}>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleExport}
+            className="cursor-pointer"
+            title="Export to CSV"
+          >
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
         }
       />
       <div className="p-4 lg:p-6 space-y-6">
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-slate-600">Total Sales</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                SAR {totalSales.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                {filteredSales.length} transactions
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-slate-600">Cash Payments</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">
+                SAR {cashSales.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                {filteredSales.filter(s => s.paymentMethod === "cash").length} cash sales
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-slate-600">Card Payments</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-blue-600">
+                SAR {cardSales.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                {filteredSales.filter(s => s.paymentMethod === "card").length} card sales
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-slate-600">Average Sale</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                SAR {avgSale.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                per transaction
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Filters */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Select
@@ -156,10 +230,10 @@ export default function CashSalesPage() {
             ))}
           </Select>
           <Select
-            value={agentFilter}
-            onChange={(e) => setAgentFilter(e.target.value)}
+            value={driverFilter}
+            onChange={(e) => setDriverFilter(e.target.value)}
           >
-            <option value="all">All Agents</option>
+            <option value="all">All Drivers</option>
             {dummyReps.map((rep) => (
               <option key={rep.id} value={rep.id}>
                 {rep.name}
@@ -189,7 +263,7 @@ export default function CashSalesPage() {
                 <h2 className="text-2xl font-bold">Jazeera Al Huda</h2>
                 <p className="text-sm text-gray-500">Cash Sale Receipt</p>
               </div>
-              
+
               <div className="space-y-3 mb-6">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Sale Number:</span>
@@ -212,7 +286,7 @@ export default function CashSalesPage() {
                   <span>{selectedSale?.vanCode}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Agent:</span>
+                  <span className="text-gray-600">Driver:</span>
                   <span>{selectedSale?.driverName}</span>
                 </div>
                 <div className="flex justify-between">
@@ -245,10 +319,17 @@ export default function CashSalesPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setReceiptModalOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setReceiptModalOpen(false)}
+              className="cursor-pointer"
+            >
               Close
             </Button>
-            <Button onClick={() => window.print()}>
+            <Button
+              onClick={() => window.print()}
+              className="cursor-pointer"
+            >
               Print Receipt
             </Button>
           </DialogFooter>
