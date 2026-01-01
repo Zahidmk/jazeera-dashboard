@@ -83,7 +83,7 @@ export function Sidebar() {
             <div className="flex items-center justify-between h-16 px-4 border-b border-gray-800">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-lg flex items-center justify-center p-1.5 bg-gray-800">
-                  <Image src="/logo.png" alt="Logo" width={32} height={32} className="object-contain" />
+                  <Image src="/jazeera-logo.png" alt="Jazeera Logo" width={32} height={32} className="object-contain" />
                 </div>
                 <div>
                   <h2 className="text-white font-bold text-sm">Dashboard</h2>
@@ -137,8 +137,8 @@ export function Sidebar() {
       <aside className="hidden lg:flex lg:flex-col lg:w-20 lg:fixed lg:inset-y-0 lg:border-r lg:bg-gray-900 lg:border-gray-800">
         <div className="flex flex-col flex-1 min-h-0">
           <div className="flex items-center justify-center h-16 border-b border-gray-800">
-            <div className="h-12 w-12 rounded-lg flex items-center justify-center p-1.5">
-              <Image src="/logo.png" alt="Logo" width={40} height={40} className="object-contain" />
+            <div className="h-12 w-12 rounded-lg flex items-center justify-center">
+              <Image src="/jazeera-logo.png" alt="Jazeera Logo" width={50} height={50} className="object-contain" />
             </div>
           </div>
           <ScrollArea className="flex-1">
