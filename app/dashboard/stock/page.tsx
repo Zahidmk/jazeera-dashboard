@@ -15,19 +15,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { dummyVanStock, dummyVans, dummyProducts, dummyStockHistory } from "@/lib/dummy-data"
+import { dummyVanStock, dummyVans, dummyStockHistory } from "@/lib/dummy-data"
 import { VanStock, StockHistory } from "@/lib/types"
 import { format } from "date-fns"
-import { Plus, Package, AlertTriangle } from "lucide-react"
+import { Package, AlertTriangle } from "lucide-react"
 
 export default function StockPage() {
   const [stock, setStock] = useState(dummyVanStock)
   const [history, setHistory] = useState(dummyStockHistory)
   const [vanFilter, setVanFilter] = useState<string>("all")
-  const [loadStockModalOpen, setLoadStockModalOpen] = useState(false)
-  const [adjustStockModalOpen, setAdjustStockModalOpen] = useState(false)
   const [historyModalOpen, setHistoryModalOpen] = useState(false)
-  const [selectedVan, setSelectedVan] = useState<string>("")
   const [selectedStock, setSelectedStock] = useState<VanStock | null>(null)
 
   const filteredStock = stock.filter((s) => {
@@ -97,18 +94,6 @@ export default function StockPage() {
             size="sm"
             onClick={() => {
               setSelectedStock(row)
-              setAdjustStockModalOpen(true)
-            }}
-            className="cursor-pointer"
-            title="Adjust stock quantity"
-          >
-            Adjust
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              setSelectedStock(row)
               setHistoryModalOpen(true)
             }}
             className="cursor-pointer"
@@ -125,17 +110,6 @@ export default function StockPage() {
     <div className="min-h-screen bg-background">
       <Topbar
         title="Van Stock Management"
-        actions={
-          <Button
-            size="sm"
-            onClick={() => setLoadStockModalOpen(true)}
-            className="cursor-pointer"
-            title="Load stock into van"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Load Stock
-          </Button>
-        }
       />
       <div className="p-4 lg:p-6 space-y-6">
         {/* Summary Cards */}
@@ -243,129 +217,7 @@ export default function StockPage() {
         </div>
       </div>
 
-      {/* Load Stock Modal */}
-      <Dialog open={loadStockModalOpen} onOpenChange={setLoadStockModalOpen}>
-        <DialogContent onClose={() => setLoadStockModalOpen(false)}>
-          <DialogHeader>
-            <DialogTitle>Load Stock</DialogTitle>
-            <DialogDescription>
-              Add products to van stock
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div>
-              <label className="text-sm font-medium">Select Van</label>
-              <Select
-                value={selectedVan}
-                onChange={(e) => setSelectedVan(e.target.value)}
-                className="mt-1"
-              >
-                <option value="">Select van</option>
-                {dummyVans.map((van) => (
-                  <option key={van.id} value={van.id}>
-                    {van.vanCode} - {van.registrationNumber}
-                  </option>
-                ))}
-              </Select>
-            </div>
-            <div>
-              <label className="text-sm font-medium">Select Product</label>
-              <Select className="mt-1">
-                <option value="">Select product</option>
-                {dummyProducts.map((product) => (
-                  <option key={product.id} value={product.id}>
-                    {product.name} ({product.sku})
-                  </option>
-                ))}
-              </Select>
-            </div>
-            <div>
-              <label className="text-sm font-medium">Quantity</label>
-              <Input
-                type="number"
-                placeholder="0"
-                className="mt-1"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setLoadStockModalOpen(false)}
-              className="cursor-pointer"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={() => setLoadStockModalOpen(false)}
-              className="cursor-pointer"
-            >
-              Load Stock
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
-      {/* Adjust Stock Modal */}
-      <Dialog open={adjustStockModalOpen} onOpenChange={setAdjustStockModalOpen}>
-        <DialogContent onClose={() => setAdjustStockModalOpen(false)}>
-          <DialogHeader>
-            <DialogTitle>Adjust Stock</DialogTitle>
-            <DialogDescription>
-              Adjust stock quantity for {selectedStock?.productName}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div>
-              <label className="text-sm font-medium">Current Quantity</label>
-              <Input
-                value={selectedStock?.quantity || ""}
-                disabled
-                className="mt-1"
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium">Adjustment Type</label>
-              <Select className="mt-1">
-                <option value="add">Add Stock</option>
-                <option value="remove">Remove Stock</option>
-                <option value="damage">Record Damage</option>
-                <option value="return">Record Return</option>
-              </Select>
-            </div>
-            <div>
-              <label className="text-sm font-medium">Quantity</label>
-              <Input
-                type="number"
-                placeholder="0"
-                className="mt-1"
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium">Notes</label>
-              <Input
-                placeholder="Optional notes"
-                className="mt-1"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setAdjustStockModalOpen(false)}
-              className="cursor-pointer"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={() => setAdjustStockModalOpen(false)}
-              className="cursor-pointer"
-            >
-              Save Adjustment
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Stock History Modal */}
       <Dialog open={historyModalOpen} onOpenChange={setHistoryModalOpen}>

@@ -3,10 +3,9 @@
 import { useRouter } from "next/navigation"
 import { Topbar } from "@/components/Topbar"
 import { DashboardCard } from "@/components/DashboardCard"
-import { ImageCard } from "@/components/ImageCard"
-import { DataTable, Column } from "@/components/DataTable"
-import { StatusBadge } from "@/components/StatusBadge"
 import { Button } from "@/components/ui/button"
+import { format } from "date-fns"
+import { Truck, Users, RefreshCw, Plus, UserPlus, TrendingUp, Banknote, Wallet } from "lucide-react"
 import { VansDistributionChart } from "@/components/Charts/VansDistributionChart"
 import { RepsDistributionChart } from "@/components/Charts/RepsDistributionChart"
 import { TopPerformingVansChart } from "@/components/Charts/TopPerformingVansChart"
@@ -20,11 +19,6 @@ import {
   dummyReps,
   dummySyncLogs,
 } from "@/lib/dummy-data"
-import { format } from "date-fns"
-import { Truck, Users, RefreshCw, Plus, ShoppingCart, DollarSign, Package, UserPlus, Navigation, TrendingUp, Banknote, Wallet } from "lucide-react"
-import { SalesByVanChart } from "@/components/Charts/SalesByVanChart"
-import { SalesByRouteChart } from "@/components/Charts/SalesByRouteChart"
-import { Van, Rep } from "@/lib/types"
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -36,47 +30,7 @@ export default function DashboardPage() {
   // Filter to show only main reps (base reps)
   const baseReps = dummyReps.filter((rep) => rep.role === "main")
 
-  const vansColumns: Column<Van>[] = [
-    {
-      header: "Van Code",
-      accessor: "vanCode",
-    },
-    {
-      header: "Registration",
-      accessor: "registrationNumber",
-    },
-    {
-      header: "Driver",
-      accessor: (row) => row.mainRepName || "Unassigned",
-    },
-    {
-      header: "Branch",
-      accessor: "branch",
-    },
-    {
-      header: "Status",
-      accessor: (row) => (
-        <StatusBadge
-          status={row.status === "active" ? "active" : "inactive"}
-        />
-      ),
-    },
-  ]
 
-  const repsColumns: Column<Rep>[] = [
-    {
-      header: "Name",
-      accessor: "name",
-    },
-    {
-      header: "Phone",
-      accessor: "phone",
-    },
-    {
-      header: "Assigned Van",
-      accessor: (row) => row.assignedVanCode || "Not Assigned",
-    },
-  ]
 
   return (
     <div className="min-h-screen bg-background">
@@ -104,16 +58,7 @@ export default function DashboardPage() {
               <Plus className="h-4 w-4 mr-2" />
               Assign Route
             </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="hidden 2xl:flex cursor-pointer"
-              onClick={() => router.push('/dashboard/stock')}
-              title="Load stock to van"
-            >
-              <Package className="h-4 w-4 mr-2" />
-              Load Stock
-            </Button>
+
             <Button
               size="sm"
               className="cursor-pointer"
@@ -226,25 +171,6 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Base Vans Table */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg sm:text-xl font-semibold">Active Vans</h2>
-          </div>
-          <div className="overflow-x-auto">
-            <DataTable data={dummyVans} columns={vansColumns} />
-          </div>
-        </div>
-
-        {/* Base Reps Table */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg sm:text-xl font-semibold">Van Drivers</h2>
-          </div>
-          <div className="overflow-x-auto">
-            <DataTable data={baseReps} columns={repsColumns} />
-          </div>
-        </div>
       </div>
     </div>
   )
