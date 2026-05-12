@@ -6,41 +6,41 @@ import { usePathname } from "next/navigation"
 import {
   LayoutDashboard,
   Truck,
-  Users,
-  Repeat,
   ListChecks,
-  Code,
   Settings,
-  Menu,
   X,
   UserCog,
   MapPin,
+  Map,
   Package,
   ShoppingCart,
   DollarSign,
   UserPlus,
   BarChart3,
+  Warehouse,
+  Users,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Separator } from "@/components/ui/separator"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
 import { createContext, useContext, useState, ReactNode } from "react"
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Vans & Reps", href: "/dashboard/vans-reps", icon: Truck },
+  { name: "Van Warehouse", href: "/dashboard/warehouse", icon: Warehouse },
   { name: "Users & Roles", href: "/dashboard/users", icon: UserCog },
+  { name: "Customers", href: "/dashboard/customers", icon: Users },
 
   { name: "Routes", href: "/dashboard/routes", icon: MapPin },
+  { name: "Live Map", href: "/dashboard/map", icon: Map },
   { name: "Stock Management", href: "/dashboard/stock", icon: Package },
-  // { name: "Orders & Deliveries", href: "/dashboard/orders", icon: ShoppingCart },
+  { name: "Orders & Deliveries", href: "/dashboard/orders", icon: ShoppingCart },
   { name: "Cash Sales", href: "/dashboard/cash-sales", icon: DollarSign },
-  // { name: "Leads & Customers", href: "/dashboard/leads", icon: UserPlus },
-  // { name: "Reports", href: "/dashboard/reports", icon: BarChart3 },
-  // { name: "Sync Queue & Logs", href: "/dashboard/sync", icon: ListChecks },
-  // { name: "API Endpoints", href: "/dashboard/api-endpoints", icon: Code },
+  { name: "Leads & Customers", href: "/dashboard/leads", icon: UserPlus },
+  { name: "Reports", href: "/dashboard/reports", icon: BarChart3 },
+  { name: "Sync Queue & Logs", href: "/dashboard/sync", icon: ListChecks },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ]
 

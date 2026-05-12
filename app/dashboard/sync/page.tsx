@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Topbar } from "@/components/Topbar"
 import { DataTable, Column } from "@/components/DataTable"
 import { StatusBadge } from "@/components/StatusBadge"
@@ -8,16 +8,62 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { dummySyncLogs, dummyQueueItems, dummyVans, dummyReps } from "@/lib/dummy-data"
 import { SyncLog, QueueItem } from "@/lib/types"
 import { format } from "date-fns"
-import { ChevronDown, ChevronUp } from "lucide-react"
+import { ChevronDown, ChevronUp, RefreshCw, CheckCircle, XCircle, Loader2 } from "lucide-react"
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"
+
+type SyncStatus = { syncing: boolean; result: string | null; error: boolean }
+
+function useSyncAction(endpoint: string) {
+  const [state, setState] = useState<SyncStatus>({ syncing: false, result: null, error: false })
+  const trigger = async () => {
+    setState({ syncing: true, result: null, error: false })
+    try {
+      const res = await fetch(`${API_URL}${endpoint}`, { method: "POST" })
+      const json = await res.json()
+      if (json.success) {
+        const d = json.data
+        const msg = d.total !== undefined
+          ? `✅ Done — ${d.created ?? 0} created, ${d.updated ?? d.skipped ?? 0} updated/skipped, ${d.total} total`
+          : `✅ Done`
+        setState({ syncing: false, result: msg, error: false })
+      } else {
+        setState({ syncing: false, result: `❌ ${json.error}`, error: true })
+      }
+    } catch (e: unknown) {
+      setState({ syncing: false, result: `❌ ${e instanceof Error ? e.message : String(e)}`, error: true })
+    }
+  }
+  return { ...state, trigger }
+}
 
 export default function SyncPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [repFilter, setRepFilter] = useState<string>("all")
   const [vanFilter, setVanFilter] = useState<string>("all")
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set())
+  const [odooStatus, setOdooStatus] = useState<{ connected: boolean; version: string; uid: number } | null>(null)
+  const [odooChecking, setOdooChecking] = useState(false)
+
+  const productSync = useSyncAction("/api/v1/sync/products")
+  const customerSync = useSyncAction("/api/v1/sync/customers")
+
+  const checkOdoo = async () => {
+    setOdooChecking(true)
+    try {
+      const res = await fetch(`${API_URL}/api/v1/sync/test`)
+      const json = await res.json()
+      if (json.success) setOdooStatus({ connected: true, version: json.data.odooVersion, uid: json.data.uid })
+      else setOdooStatus(null)
+    } catch { setOdooStatus(null) }
+    finally { setOdooChecking(false) }
+  }
+
+  useEffect(() => { checkOdoo() }, [])
 
   const filteredLogs = dummySyncLogs.filter((log) => {
     if (statusFilter !== "all" && log.status !== statusFilter) return false
@@ -112,6 +158,60 @@ export default function SyncPage() {
     <div className="min-h-screen bg-background">
       <Topbar title="Sync Queue & Logs" />
       <div className="p-4 lg:p-6 space-y-6">
+
+        {/* ── Odoo Live Sync Panel ─────────────────────────── */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Connection Status */}
+          <Card>
+            <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-slate-600">Odoo Connection</CardTitle></CardHeader>
+            <CardContent className="flex items-center gap-3">
+              {odooChecking ? (
+                <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
+              ) : odooStatus ? (
+                <CheckCircle className="h-5 w-5 text-green-600" />
+              ) : (
+                <XCircle className="h-5 w-5 text-red-500" />
+              )}
+              <div className="text-sm">
+                {odooChecking ? "Checking…" : odooStatus ? (
+                  <span className="text-green-700 font-medium">Connected — v{odooStatus.version}</span>
+                ) : (
+                  <span className="text-red-600 font-medium">Not connected</span>
+                )}
+              </div>
+              <Button variant="ghost" size="sm" onClick={checkOdoo} disabled={odooChecking} className="ml-auto cursor-pointer">
+                <RefreshCw className={`h-3 w-3 ${odooChecking ? "animate-spin" : ""}`} />
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Sync Products */}
+          <Card>
+            <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-slate-600">Sync Products from Odoo</CardTitle></CardHeader>
+            <CardContent className="space-y-2">
+              <Button size="sm" onClick={productSync.trigger} disabled={productSync.syncing} className="w-full cursor-pointer">
+                {productSync.syncing ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Syncing…</> : <><RefreshCw className="h-4 w-4 mr-2" />Sync Products</>}
+              </Button>
+              {productSync.result && (
+                <p className={`text-xs ${productSync.error ? "text-red-600" : "text-green-600"}`}>{productSync.result}</p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Sync Customers */}
+          <Card>
+            <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-slate-600">Sync Customers from Odoo</CardTitle></CardHeader>
+            <CardContent className="space-y-2">
+              <Button size="sm" onClick={customerSync.trigger} disabled={customerSync.syncing} className="w-full cursor-pointer">
+                {customerSync.syncing ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Syncing…</> : <><RefreshCw className="h-4 w-4 mr-2" />Sync Customers</>}
+              </Button>
+              {customerSync.result && (
+                <p className={`text-xs ${customerSync.error ? "text-red-600" : "text-green-600"}`}>{customerSync.result}</p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
         <Tabs defaultValue="queue" className="w-full">
           <TabsList>
             <TabsTrigger value="queue">Queue</TabsTrigger>

@@ -1,10 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Select } from "@/components/ui/select"
 import { PaymentMethodBadge } from "@/components/PaymentMethodBadge"
 import {
   Dialog,
@@ -14,163 +12,152 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { dummyCustomers, dummyVanStock, dummyProducts } from "@/lib/dummy-data"
-import { CashSaleItem, PaymentMethod } from "@/lib/types"
-import { Plus, Minus, X } from "lucide-react"
+import { Plus, Minus, X, Loader2 } from "lucide-react"
+import { getVanInventory, getCart, addCartItem, updateCartItem, removeCartItem, submitSale } from "@/lib/api/driver"
 
 export default function MobileCashSalesPage() {
-  const [selectedCustomer, setSelectedCustomer] = useState<string>("")
-  const [items, setItems] = useState<CashSaleItem[]>([])
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash")
+  const [inventory, setInventory] = useState<any[]>([])
+  const [cart, setCart] = useState<any[]>([])
+  const [paymentMethod, setPaymentMethod] = useState("CASH")
   const [receiptModalOpen, setReceiptModalOpen] = useState(false)
-  const [newCustomerModalOpen, setNewCustomerModalOpen] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
+  const [lastSale, setLastSale] = useState<any>(null)
 
-  const availableStock = dummyVanStock
+  useEffect(() => {
+    Promise.all([getVanInventory(), getCart()])
+      .then(([invRes, cartRes]: [any, any]) => {
+        setInventory(invRes.data ?? [])
+        setCart(cartRes.data?.items ?? [])
+      })
+      .catch((err: any) => console.error(err))
+      .finally(() => setLoading(false))
+  }, [])
 
-  const addItem = (productId: string) => {
-    const stock = availableStock.find(s => s.productId === productId)
-    if (!stock) return
+  const handleAddItem = async (productId: string) => {
+    try {
+      const res: any = await addCartItem(productId, 1)
+      setCart(res.data?.items ?? [])
+    } catch (err: any) {
+      alert(err.message)
+    }
+  }
 
-    const existingItem = items.find(i => i.productId === productId)
-    if (existingItem) {
-      setItems(items.map(i => 
-        i.id === existingItem.id 
-          ? { ...i, quantity: i.quantity + 1, total: (i.quantity + 1) * i.price }
-          : i
-      ))
-    } else {
-      const newItem: CashSaleItem = {
-        id: `item-${Date.now()}`,
-        productId: stock.productId,
-        productName: stock.productName,
-        quantity: 1,
-        unit: stock.unit,
-        price: stock.price,
-        total: stock.price,
+  const handleUpdateQty = async (itemId: string, quantity: number) => {
+    try {
+      if (quantity <= 0) {
+        const res: any = await removeCartItem(itemId)
+        setCart(res.data?.items ?? [])
+      } else {
+        const res: any = await updateCartItem(itemId, quantity)
+        setCart(res.data?.items ?? [])
       }
-      setItems([...items, newItem])
+    } catch (err: any) {
+      alert(err.message)
     }
   }
 
-  const removeItem = (itemId: string) => {
-    setItems(items.filter(i => i.id !== itemId))
-  }
-
-  const updateQuantity = (itemId: string, quantity: number) => {
-    if (quantity <= 0) {
-      removeItem(itemId)
-      return
+  const handleRemoveItem = async (itemId: string) => {
+    try {
+      const res: any = await removeCartItem(itemId)
+      setCart(res.data?.items ?? [])
+    } catch (err: any) {
+      alert(err.message)
     }
-    setItems(items.map(i => 
-      i.id === itemId 
-        ? { ...i, quantity, total: quantity * i.price }
-        : i
-    ))
   }
 
-  const totalAmount = items.reduce((sum, item) => sum + item.total, 0)
+  const handleCompleteSale = async () => {
+    setSubmitting(true)
+    try {
+      // Try to get GPS location
+      let latitude: number | undefined
+      let longitude: number | undefined
+      if (navigator.geolocation) {
+        try {
+          const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
+            navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 })
+          )
+          latitude = pos.coords.latitude
+          longitude = pos.coords.longitude
+        } catch { /* no GPS */ }
+      }
 
-  const handleCompleteSale = () => {
-    setReceiptModalOpen(true)
+      const res: any = await submitSale({ paymentMethod, latitude, longitude })
+      setLastSale(res.data)
+      setCart([])
+      setReceiptModalOpen(true)
+    } catch (err: any) {
+      alert(err.message)
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const totalAmount = cart.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0)
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+      </div>
+    )
   }
 
   return (
     <div className="p-4 space-y-4">
       <h1 className="text-2xl font-bold">Cash Sales</h1>
 
-      {/* Customer Selection */}
+      {/* Add Products from Van Inventory */}
       <Card>
         <CardContent className="p-4">
-          <label className="text-sm font-medium mb-2 block">Customer</label>
-          <div className="flex gap-2">
-            <Select
-              value={selectedCustomer}
-              onChange={(e) => setSelectedCustomer(e.target.value)}
-              className="flex-1"
-            >
-              <option value="">Select customer</option>
-              {dummyCustomers.map((customer) => (
-                <option key={customer.id} value={customer.id}>
-                  {customer.name} - {customer.phone}
-                </option>
-              ))}
-            </Select>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setNewCustomerModalOpen(true)}
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Add Products */}
-      <Card>
-        <CardContent className="p-4">
-          <label className="text-sm font-medium mb-2 block">Add Products</label>
+          <label className="text-sm font-medium mb-2 block">Van Stock — Tap to Add</label>
           <div className="space-y-2 max-h-48 overflow-y-auto">
-            {availableStock.map((stock) => (
-              <div key={stock.id} className="flex justify-between items-center p-2 border rounded">
+            {inventory.map((item: any) => (
+              <div key={item.id} className="flex justify-between items-center p-2 border rounded">
                 <div className="flex-1">
-                  <p className="font-medium text-sm">{stock.productName}</p>
+                  <p className="font-medium text-sm">{item.product?.name}</p>
                   <p className="text-xs text-gray-500">
-                    {stock.quantity} {stock.unit} available - SAR {stock.price.toFixed(2)}
+                    {item.quantity} {item.product?.unit} available · SAR {item.product?.price?.toFixed(2) ?? "—"}
                   </p>
                 </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => addItem(stock.productId)}
-                >
+                <Button size="sm" variant="outline" onClick={() => handleAddItem(item.productId)}>
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
             ))}
+            {inventory.length === 0 && (
+              <p className="text-sm text-gray-500 text-center py-4">No stock loaded in van</p>
+            )}
           </div>
         </CardContent>
       </Card>
 
-      {/* Selected Items */}
-      {items.length > 0 && (
+      {/* Cart Items */}
+      {cart.length > 0 && (
         <Card>
           <CardContent className="p-4">
-            <label className="text-sm font-medium mb-2 block">Selected Items</label>
+            <label className="text-sm font-medium mb-2 block">Cart</label>
             <div className="space-y-2">
-              {items.map((item) => (
+              {cart.map((item: any) => (
                 <div key={item.id} className="flex justify-between items-center p-2 border rounded">
                   <div className="flex-1">
-                    <p className="font-medium text-sm">{item.productName}</p>
-                    <p className="text-xs text-gray-500">SAR {item.price.toFixed(2)} per {item.unit}</p>
+                    <p className="font-medium text-sm">{item.product?.name ?? item.productName}</p>
+                    <p className="text-xs text-gray-500">SAR {item.price?.toFixed(2)} each</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                    >
+                    <Button size="sm" variant="outline" onClick={() => handleUpdateQty(item.id, item.quantity - 1)}>
                       <Minus className="h-3 w-3" />
                     </Button>
                     <span className="w-8 text-center">{item.quantity}</span>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                    >
+                    <Button size="sm" variant="outline" onClick={() => handleUpdateQty(item.id, item.quantity + 1)}>
                       <Plus className="h-3 w-3" />
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => removeItem(item.id)}
-                      className="ml-2 text-red-600"
-                    >
+                    <Button size="sm" variant="ghost" onClick={() => handleRemoveItem(item.id)} className="text-red-600">
                       <X className="h-4 w-4" />
                     </Button>
                   </div>
-                  <div className="ml-4 font-semibold">
-                    SAR {item.total.toFixed(2)}
+                  <div className="ml-4 font-semibold text-sm">
+                    SAR {(item.price * item.quantity).toFixed(2)}
                   </div>
                 </div>
               ))}
@@ -179,31 +166,28 @@ export default function MobileCashSalesPage() {
         </Card>
       )}
 
-      {/* Payment Method & Total */}
+      {/* Payment & Submit */}
       <Card>
         <CardContent className="p-4 space-y-4">
           <div>
             <label className="text-sm font-medium mb-2 block">Payment Method</label>
-            <Select
+            <select
+              className="w-full border rounded-md px-3 py-2 text-sm"
               value={paymentMethod}
-              onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
+              onChange={(e) => setPaymentMethod(e.target.value)}
             >
-              <option value="cash">Cash</option>
-              <option value="card">Card</option>
-              <option value="upi">UPI</option>
-            </Select>
+              <option value="CASH">Cash</option>
+              <option value="CARD">Card</option>
+              <option value="BANK_TRANSFER">Bank Transfer</option>
+            </select>
           </div>
           <div className="flex justify-between items-center pt-3 border-t">
-            <span className="text-lg font-semibold">Total Amount</span>
+            <span className="text-lg font-semibold">Total</span>
             <span className="text-2xl font-bold">SAR {totalAmount.toFixed(2)}</span>
           </div>
-          <Button
-            className="w-full"
-            size="lg"
-            onClick={handleCompleteSale}
-            disabled={items.length === 0 || !selectedCustomer}
-          >
-            Complete Sale
+          <Button className="w-full" size="lg" onClick={handleCompleteSale} disabled={cart.length === 0 || submitting}>
+            {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+            {submitting ? "Processing..." : "Complete Sale"}
           </Button>
         </CardContent>
       </Card>
@@ -212,57 +196,17 @@ export default function MobileCashSalesPage() {
       <Dialog open={receiptModalOpen} onOpenChange={setReceiptModalOpen}>
         <DialogContent onClose={() => setReceiptModalOpen(false)}>
           <DialogHeader>
-            <DialogTitle>Sale Complete</DialogTitle>
-            <DialogDescription>Receipt</DialogDescription>
+            <DialogTitle>Sale Complete ✅</DialogTitle>
+            <DialogDescription>Receipt #{lastSale?.id?.slice(0, 8)}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="text-center border rounded p-4 bg-gray-50">
-              <p className="text-2xl font-bold mb-2">SAR {totalAmount.toFixed(2)}</p>
-              <PaymentMethodBadge method={paymentMethod} />
-            </div>
-            <div className="space-y-2">
-              {items.map((item) => (
-                <div key={item.id} className="flex justify-between text-sm">
-                  <span>{item.productName} × {item.quantity}</span>
-                  <span>SAR {item.total.toFixed(2)}</span>
-                </div>
-              ))}
+              <p className="text-2xl font-bold mb-2">SAR {lastSale?.totalAmount?.toFixed(2)}</p>
+              <PaymentMethodBadge method={lastSale?.paymentMethod?.toLowerCase()} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => {
-              setReceiptModalOpen(false)
-              setItems([])
-              setSelectedCustomer("")
-            }}>
-              Close
-            </Button>
-            <Button onClick={() => window.print()}>
-              Print Receipt
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* New Customer Modal */}
-      <Dialog open={newCustomerModalOpen} onOpenChange={setNewCustomerModalOpen}>
-        <DialogContent onClose={() => setNewCustomerModalOpen(false)}>
-          <DialogHeader>
-            <DialogTitle>New Customer</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <Input placeholder="Name" />
-            <Input placeholder="Phone" />
-            <Input placeholder="Email (optional)" />
-            <Input placeholder="Address" />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setNewCustomerModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={() => setNewCustomerModalOpen(false)}>
-              Add Customer
-            </Button>
+            <Button onClick={() => setReceiptModalOpen(false)}>Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

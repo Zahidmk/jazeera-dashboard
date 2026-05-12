@@ -1,279 +1,254 @@
 "use client"
 
-import { useState } from "react"
+// ─── REAL DATA: fetched live from Odoo via the backend ───────────────────────
+
+import { useState, useEffect, useCallback } from "react"
 import { Topbar } from "@/components/Topbar"
 import { DataTable, Column } from "@/components/DataTable"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Select } from "@/components/ui/select"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { dummyVanStock, dummyVans, dummyStockHistory } from "@/lib/dummy-data"
-import { VanStock, StockHistory } from "@/lib/types"
-import { format } from "date-fns"
-import { Package, AlertTriangle } from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { fetchOdooProducts, fetchOdooStock, OdooStockItem } from "@/lib/api/odoo"
+import { AlertTriangle, RefreshCw } from "lucide-react"
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"
+
+type StockRow = {
+  productId: number
+  productName: string
+  sku: string
+  category: string | null
+  unit: string
+  priceRetail: number
+  totalQty: number
+  totalValue: number
+  locations: { location: string; qty: number }[]
+}
 
 export default function StockPage() {
-  const [stock, setStock] = useState(dummyVanStock)
-  const [history, setHistory] = useState(dummyStockHistory)
-  const [vanFilter, setVanFilter] = useState<string>("all")
-  const [historyModalOpen, setHistoryModalOpen] = useState(false)
-  const [selectedStock, setSelectedStock] = useState<VanStock | null>(null)
+  const [rows, setRows] = useState<StockRow[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [search, setSearch] = useState("")
+  const [categoryFilter, setCategoryFilter] = useState("all")
+  const [syncing, setSyncing] = useState(false)
+  const [syncMsg, setSyncMsg] = useState<string | null>(null)
 
-  const filteredStock = stock.filter((s) => {
-    if (vanFilter !== "all" && s.vanId !== vanFilter) return false
-    return true
+  const loadData = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const [products, stockQuants] = await Promise.all([
+        fetchOdooProducts(1000),
+        fetchOdooStock(2000),
+      ])
+
+      const stockMap = new Map<number, OdooStockItem>()
+      for (const q of stockQuants) stockMap.set(q.productId, q)
+
+      const merged: StockRow[] = products.map((p) => {
+        const si = stockMap.get(p.id)
+        const qty = si ? si.totalQty : p.qtyAvailable
+        return {
+          productId: p.id,
+          productName: p.name,
+          sku: p.sku,
+          category: p.category,
+          unit: p.unit,
+          priceRetail: p.priceRetail,
+          totalQty: qty,
+          totalValue: qty * p.priceRetail,
+          locations: si?.locations || [],
+        }
+      })
+      setRows(merged)
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { loadData() }, [loadData])
+
+  const handleSync = async () => {
+    setSyncing(true)
+    setSyncMsg(null)
+    try {
+      const res = await fetch(`${API_URL}/api/v1/sync/products`, { method: "POST" })
+      const json = await res.json()
+      setSyncMsg(json.success
+        ? `✅ Synced — Created: ${json.data.created}, Updated: ${json.data.updated}`
+        : `❌ ${json.error}`)
+      await loadData()
+    } catch (e: unknown) {
+      setSyncMsg(`❌ ${e instanceof Error ? e.message : String(e)}`)
+    } finally {
+      setSyncing(false)
+    }
+  }
+
+  const categories = Array.from(new Set(rows.map((r) => r.category).filter(Boolean))) as string[]
+  const filtered = rows.filter((r) => {
+    const ms = !search || r.productName.toLowerCase().includes(search.toLowerCase()) || r.sku.toLowerCase().includes(search.toLowerCase())
+    const mc = categoryFilter === "all" || r.category === categoryFilter
+    return ms && mc
   })
+  const lowStockItems = filtered.filter((r) => r.totalQty < 10 && r.totalQty >= 0)
+  const outOfStockItems = filtered.filter((r) => r.totalQty <= 0)
+  const totalValue = filtered.reduce((sum, r) => sum + r.totalValue, 0)
 
-  // Low stock alerts
-  const lowStockItems = filteredStock.filter((s) => s.quantity < 10)
-
-  const stockColumns: Column<VanStock>[] = [
-    {
-      header: "Van",
-      accessor: "vanCode",
-    },
-    {
-      header: "Driver",
-      accessor: (row) => {
-        const van = dummyVans.find(v => v.id === row.vanId)
-        return van?.mainRepName || "Unassigned"
-      },
-    },
-    {
-      header: "Product",
-      accessor: "productName",
-    },
-    {
-      header: "SKU",
-      accessor: "productSku",
-    },
-    {
-      header: "Quantity",
-      accessor: (row) => `${row.quantity} ${row.unit}`,
-    },
+  const stockColumns: Column<StockRow>[] = [
+    { header: "Product", accessor: "productName" },
+    { header: "SKU", accessor: "sku" },
+    { header: "Category", accessor: (r) => r.category || "—" },
+    { header: "Unit", accessor: "unit" },
+    { header: "Quantity", accessor: (r) => `${r.totalQty.toLocaleString()} ${r.unit}` },
     {
       header: "Status",
-      accessor: (row) => {
-        if (row.quantity === 0) {
-          return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800">Out of Stock</span>
-        } else if (row.quantity < 10) {
-          return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-orange-100 text-orange-800">Low Stock</span>
-        } else if (row.quantity > 50) {
-          return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">Overstocked</span>
-        } else {
-          return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800">Optimal</span>
-        }
+      accessor: (r) => {
+        if (r.totalQty <= 0) return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800">Out of Stock</span>
+        if (r.totalQty < 10) return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-orange-100 text-orange-800">Low Stock</span>
+        if (r.totalQty > 100) return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">Well Stocked</span>
+        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800">In Stock</span>
       },
     },
+    { header: "Unit Price", accessor: (r) => `SAR ${r.priceRetail.toFixed(2)}` },
+    { header: "Total Value", accessor: (r) => `SAR ${r.totalValue.toLocaleString("en-US", { minimumFractionDigits: 2 })}` },
     {
-      header: "Unit Price",
-      accessor: (row) => `SAR ${row.price.toFixed(2)}`,
-    },
-    {
-      header: "Total Value",
-      accessor: (row) => `SAR ${row.totalValue.toFixed(2)}`,
-    },
-    {
-      header: "Last Updated",
-      accessor: (row) => format(row.lastUpdated, "MMM dd, yyyy HH:mm"),
-    },
-    {
-      header: "Actions",
-      accessor: (row) => (
-        <div className="flex gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              setSelectedStock(row)
-              setHistoryModalOpen(true)
-            }}
-            className="cursor-pointer"
-            title="View stock history"
-          >
-            History
-          </Button>
-        </div>
-      ),
+      header: "Locations",
+      accessor: (r) => r.locations.length > 0
+        ? r.locations.map((l) => `${l.location}: ${l.qty}`).join(" | ")
+        : "—",
     },
   ]
 
   return (
     <div className="min-h-screen bg-background">
       <Topbar
-        title="Van Stock Management"
+        title="Stock Management (Live from Odoo)"
+        actions={
+          <Button size="sm" onClick={handleSync} disabled={syncing} className="cursor-pointer">
+            <RefreshCw className={`h-4 w-4 mr-2 ${syncing ? "animate-spin" : ""}`} />
+            {syncing ? "Syncing…" : "Sync to DB"}
+          </Button>
+        }
       />
       <div className="p-4 lg:p-6 space-y-6">
+        {syncMsg && (
+          <div className="rounded-md bg-blue-50 border border-blue-200 px-4 py-2 text-sm text-blue-800">
+            {syncMsg}
+          </div>
+        )}
+        {error && (
+          <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-800">
+            ❌ {error} — Make sure the backend is running at {API_URL}
+          </div>
+        )}
+
         {/* Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-slate-600">Vans with Stock</CardTitle>
+              <CardTitle className="text-sm font-medium text-slate-600">Total Products</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
-                {new Set(stock.map(s => s.vanId)).size}
-              </div>
-              <p className="text-xs text-slate-500 mt-1">
-                out of {dummyVans.length} total vans
-              </p>
+              <div className="text-2xl font-bold">{loading ? "…" : rows.length.toLocaleString()}</div>
+              <p className="text-xs text-slate-500 mt-1">from Odoo</p>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-slate-600">Total Stock Value</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                SAR {stock.reduce((sum, s) => sum + s.totalValue, 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                {loading ? "…" : `SAR ${totalValue.toLocaleString("en-US", { minimumFractionDigits: 2 })}`}
               </div>
-              <p className="text-xs text-slate-500 mt-1">
-                across all vans
-              </p>
+              <p className="text-xs text-slate-500 mt-1">all products</p>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-slate-600">Low Stock Items</CardTitle>
+              <CardTitle className="text-sm font-medium text-slate-600">Low Stock</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-orange-600">
-                {lowStockItems.length}
-              </div>
-              <p className="text-xs text-slate-500 mt-1">
-                need restocking
-              </p>
+              <div className="text-2xl font-bold text-orange-600">{loading ? "…" : lowStockItems.length}</div>
+              <p className="text-xs text-slate-500 mt-1">below 10 units</p>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-slate-600">Total Products</CardTitle>
+              <CardTitle className="text-sm font-medium text-slate-600">Out of Stock</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
-                {stock.reduce((sum, s) => sum + s.quantity, 0)}
-              </div>
-              <p className="text-xs text-slate-500 mt-1">
-                items in stock
-              </p>
+              <div className="text-2xl font-bold text-red-600">{loading ? "…" : outOfStockItems.length}</div>
+              <p className="text-xs text-slate-500 mt-1">need restocking</p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Low Stock Alerts */}
-        {lowStockItems.length > 0 && (
+        {/* Low Stock Alert */}
+        {!loading && lowStockItems.length > 0 && (
           <Card className="border-orange-200 bg-orange-50">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-orange-800">
+              <CardTitle className="flex items-center gap-2 text-orange-800 text-base">
                 <AlertTriangle className="h-5 w-5" />
-                Low Stock Alert
+                Low Stock Alert — {lowStockItems.length} item(s)
               </CardTitle>
-              <CardDescription>
-                {lowStockItems.length} product(s) are running low on stock
-              </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
-                {lowStockItems.map((item) => (
-                  <div key={item.id} className="text-sm">
-                    <span className="font-medium">{item.vanCode}</span> - {item.productName}:{" "}
-                    <span className="text-orange-600 font-semibold">{item.quantity} {item.unit}</span>
-                  </div>
+              <div className="flex flex-wrap gap-2">
+                {lowStockItems.slice(0, 10).map((item) => (
+                  <span key={item.productId} className="text-xs bg-orange-100 text-orange-700 rounded px-2 py-1">
+                    {item.productName}: <strong>{item.totalQty}</strong> {item.unit}
+                  </span>
                 ))}
+                {lowStockItems.length > 10 && (
+                  <span className="text-xs text-orange-500">+{lowStockItems.length - 10} more</span>
+                )}
               </div>
             </CardContent>
           </Card>
         )}
 
         {/* Filters */}
-        <div className="flex gap-4 items-center">
-          <Select
-            value={vanFilter}
-            onChange={(e) => setVanFilter(e.target.value)}
+        <div className="flex flex-wrap gap-3 items-center">
+          <Input
+            placeholder="Search product or SKU…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-64"
+          />
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="border rounded-md px-3 py-2 text-sm bg-white"
           >
-            <option value="all">All Vans</option>
-            {dummyVans.map((van) => (
-              <option key={van.id} value={van.id}>
-                {van.vanCode}
-              </option>
-            ))}
-          </Select>
+            <option value="all">All Categories</option>
+            {categories.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+          <span className="text-sm text-slate-500">
+            {loading ? "Loading…" : `${filtered.length} of ${rows.length} products`}
+          </span>
+          <Button variant="outline" size="sm" onClick={loadData} disabled={loading} className="cursor-pointer">
+            <RefreshCw className={`h-4 w-4 mr-1 ${loading ? "animate-spin" : ""}`} />
+            Refresh
+          </Button>
         </div>
 
         {/* Stock Table */}
-        <div className="overflow-x-auto">
-          <DataTable data={filteredStock} columns={stockColumns} />
-        </div>
-      </div>
-
-
-
-      {/* Stock History Modal */}
-      <Dialog open={historyModalOpen} onOpenChange={setHistoryModalOpen}>
-        <DialogContent onClose={() => setHistoryModalOpen(false)} className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Stock History</DialogTitle>
-            <DialogDescription>
-              History for {selectedStock?.productName} in {selectedStock?.vanCode}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-2 py-4 max-h-96 overflow-y-auto">
-            {history
-              .filter((h) => h.productId === selectedStock?.productId && h.vanId === selectedStock?.vanId)
-              .map((entry) => (
-                <div key={entry.id} className="border rounded p-3">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <span className="font-medium capitalize">{entry.type}</span>
-                      <p className="text-sm text-gray-600">
-                        {entry.quantityChange > 0 ? "+" : ""}{entry.quantityChange} {selectedStock?.unit}
-                      </p>
-                      {entry.notes && (
-                        <p className="text-sm text-gray-500 mt-1">{entry.notes}</p>
-                      )}
-                    </div>
-                    <div className="text-right text-sm text-gray-500">
-                      {format(entry.createdAt, "MMM dd, yyyy HH:mm")}
-                    </div>
-                  </div>
-                  <div className="text-xs text-gray-400 mt-2">
-                    {entry.previousQuantity} → {entry.newQuantity} {selectedStock?.unit}
-                  </div>
-                </div>
-              ))}
+        {loading ? (
+          <div className="flex items-center justify-center py-20 text-slate-500">
+            <RefreshCw className="h-6 w-6 animate-spin mr-3" />
+            Loading live stock data from Odoo…
           </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setHistoryModalOpen(false)}
-              className="cursor-pointer"
-            >
-              Close
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        ) : (
+          <div className="overflow-x-auto">
+            <DataTable data={filtered} columns={stockColumns} />
+          </div>
+        )}
+      </div>
     </div>
   )
 }
-
-
-
-
-
-
-
-
-
-

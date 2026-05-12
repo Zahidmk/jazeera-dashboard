@@ -1,11 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Topbar } from "@/components/Topbar"
 import { DataTable, Column } from "@/components/DataTable"
+import { StatusBadge } from "@/components/StatusBadge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Select } from "@/components/ui/select"
 import {
   Dialog,
   DialogContent,
@@ -15,74 +15,113 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { dummyRoutes, dummyVans, dummyReps } from "@/lib/dummy-data"
-import { Route } from "@/lib/types"
-import { Plus, Edit, MapPin, Truck, Users, Store } from "lucide-react"
+import { apiCall } from "@/lib/api/client"
+import { Plus, Edit, MapPin, Loader2 } from "lucide-react"
+
+interface RouteRecord {
+  id: string
+  name: string
+  area?: string
+  description?: string
+  isActive: boolean
+  createdAt: string
+  _count: { deliveries: number; shifts: number }
+}
+
+interface ApiResponse<T> {
+  success: boolean
+  data: T
+}
 
 export default function RoutesPage() {
-  const [routes, setRoutes] = useState(dummyRoutes)
-  const [vanFilter, setVanFilter] = useState<string>("all")
-  const [routeModalOpen, setRouteModalOpen] = useState(false)
-  const [selectedRoute, setSelectedRoute] = useState<Route | null>(null)
+  const [routes, setRoutes] = useState<RouteRecord[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const filteredRoutes = routes.filter((route) => {
-    if (vanFilter !== "all" && route.vanId !== vanFilter) return false
-    return true
-  })
+  const [modalOpen, setModalOpen] = useState(false)
+  const [selectedRoute, setSelectedRoute] = useState<RouteRecord | null>(null)
+  const [form, setForm] = useState({ name: "", area: "", description: "" })
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState("")
 
-  // Calculate stats
-  const assignedRoutes = routes.filter(r => r.vanId).length
-  const unassignedRoutes = routes.length - assignedRoutes
-  const totalShops = routes.reduce((sum, r) => sum + r.shopCount, 0)
+  const loadData = useCallback(async () => {
+    setLoading(true)
+    try {
+      const res = await apiCall<ApiResponse<RouteRecord[]>>("/api/v1/admin/routes")
+      setRoutes(res.data)
+    } catch (err) {
+      console.error("Failed to load routes:", err)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
 
-  const routesColumns: Column<Route>[] = [
-    {
-      header: "Route Name",
-      accessor: "name",
-    },
-    {
-      header: "Van",
-      accessor: (row) => {
-        const van = dummyVans.find((v) => v.id === row.vanId)
-        return van?.vanCode || "Unassigned"
-      },
-    },
-    {
-      header: "Driver",
-      accessor: (row) => {
-        const van = dummyVans.find((v) => v.id === row.vanId)
-        return van?.mainRepName || "Unassigned"
-      },
-    },
-    {
-      header: "Shop Count",
-      accessor: "shopCount",
-    },
-    {
-      header: "Status",
-      accessor: (row) => {
-        if (!row.vanId) {
-          return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-800">Unassigned</span>
-        } else {
-          return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800">Assigned</span>
-        }
-      },
-    },
+  useEffect(() => { loadData() }, [loadData])
+
+  const openAdd = () => {
+    setSelectedRoute(null)
+    setForm({ name: "", area: "", description: "" })
+    setError("")
+    setModalOpen(true)
+  }
+
+  const openEdit = (route: RouteRecord) => {
+    setSelectedRoute(route)
+    setForm({ name: route.name, area: route.area || "", description: route.description || "" })
+    setError("")
+    setModalOpen(true)
+  }
+
+  const save = async () => {
+    if (!form.name.trim()) { setError("Route name is required"); return }
+    setSaving(true)
+    setError("")
+    try {
+      if (selectedRoute) {
+        await apiCall(`/api/v1/admin/routes/${selectedRoute.id}`, {
+          method: "PATCH",
+          body: JSON.stringify({ name: form.name, area: form.area || null, description: form.description || null }),
+        })
+      } else {
+        await apiCall("/api/v1/admin/routes", {
+          method: "POST",
+          body: JSON.stringify({ name: form.name, area: form.area || null, description: form.description || null }),
+        })
+      }
+      setModalOpen(false)
+      loadData()
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to save route")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const toggleStatus = async (route: RouteRecord) => {
+    try {
+      await apiCall(`/api/v1/admin/routes/${route.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ isActive: !route.isActive }),
+      })
+      loadData()
+    } catch (err) { console.error(err) }
+  }
+
+  const columns: Column<RouteRecord>[] = [
+    { header: "Route Name", accessor: "name" },
+    { header: "Area", accessor: (row) => row.area || <span className="text-slate-400">—</span> },
+    { header: "Description", accessor: (row) => row.description ? <span className="text-sm text-slate-600 max-w-[200px] truncate block">{row.description}</span> : <span className="text-slate-400">—</span> },
+    { header: "Deliveries", accessor: (row) => <span className="text-sm">{row._count.deliveries}</span> },
+    { header: "Shifts", accessor: (row) => <span className="text-sm">{row._count.shifts}</span> },
+    { header: "Status", accessor: (row) => <StatusBadge status={row.isActive ? "active" : "inactive"} /> },
     {
       header: "Actions",
       accessor: (row) => (
-        <div className="flex gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              setSelectedRoute(row)
-              setRouteModalOpen(true)
-            }}
-            className="cursor-pointer"
-            title="Edit route"
-          >
+        <div className="flex gap-1">
+          <Button variant="ghost" size="sm" onClick={() => openEdit(row)} className="cursor-pointer" title="Edit">
             <Edit className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="sm" className="cursor-pointer text-xs" onClick={() => toggleStatus(row)}>
+            {row.isActive ? "Deactivate" : "Activate"}
           </Button>
         </div>
       ),
@@ -94,155 +133,73 @@ export default function RoutesPage() {
       <Topbar
         title="Route Management"
         actions={
-          <Button
-            size="sm"
-            onClick={() => {
-              setSelectedRoute(null)
-              setRouteModalOpen(true)
-            }}
-            className="cursor-pointer"
-            title="Create new route"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Create Route
+          <Button size="sm" onClick={openAdd} className="cursor-pointer">
+            <Plus className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Create Route</span>
           </Button>
         }
       />
-      <div className="p-4 lg:p-6 space-y-6">
+
+      <div className="p-3 sm:p-4 lg:p-6 xl:p-8 space-y-4 sm:space-y-6">
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-slate-600">Total Routes</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {routes.length}
-              </div>
-              <p className="text-xs text-slate-500 mt-1">
-                active routes
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-slate-600">Assigned Routes</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">
-                {assignedRoutes}
-              </div>
-              <p className="text-xs text-slate-500 mt-1">
-                routes with vans
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-slate-600">Unassigned Routes</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-orange-600">
-                {unassignedRoutes}
-              </div>
-              <p className="text-xs text-slate-500 mt-1">
-                need assignment
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-slate-600">Total Shops</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {totalShops}
-              </div>
-              <p className="text-xs text-slate-500 mt-1">
-                across all routes
-              </p>
-            </CardContent>
-          </Card>
+        <div className="grid gap-3 sm:gap-4 grid-cols-2 md:grid-cols-4">
+          <Card><CardHeader className="pb-3"><CardTitle className="text-sm font-medium text-slate-600">Total Routes</CardTitle></CardHeader>
+            <CardContent><div className="text-2xl font-bold">{routes.length}</div><p className="text-xs text-slate-500 mt-1">all routes</p></CardContent></Card>
+          <Card><CardHeader className="pb-3"><CardTitle className="text-sm font-medium text-slate-600">Active Routes</CardTitle></CardHeader>
+            <CardContent><div className="text-2xl font-bold text-green-600">{routes.filter(r => r.isActive).length}</div><p className="text-xs text-slate-500 mt-1">currently active</p></CardContent></Card>
+          <Card><CardHeader className="pb-3"><CardTitle className="text-sm font-medium text-slate-600">Total Deliveries</CardTitle></CardHeader>
+            <CardContent><div className="text-2xl font-bold">{routes.reduce((s, r) => s + r._count.deliveries, 0)}</div><p className="text-xs text-slate-500 mt-1">across all routes</p></CardContent></Card>
+          <Card><CardHeader className="pb-3"><CardTitle className="text-sm font-medium text-slate-600">Total Shifts</CardTitle></CardHeader>
+            <CardContent><div className="text-2xl font-bold">{routes.reduce((s, r) => s + r._count.shifts, 0)}</div><p className="text-xs text-slate-500 mt-1">completed shifts</p></CardContent></Card>
         </div>
 
-        {/* Filters */}
-        <div className="flex gap-4 items-center">
-          <Select
-            value={vanFilter}
-            onChange={(e) => setVanFilter(e.target.value)}
-          >
-            <option value="all">All Vans</option>
-            {dummyVans.map((van) => (
-              <option key={van.id} value={van.id}>
-                {van.vanCode}
-              </option>
-            ))}
-          </Select>
+        <div className="flex gap-3 items-center">
+          <Button variant="outline" size="sm" onClick={loadData} className="cursor-pointer">Refresh</Button>
         </div>
 
-        {/* Routes Table */}
-        <div className="overflow-x-auto">
-          <DataTable data={filteredRoutes} columns={routesColumns} />
-        </div>
+        {/* Table */}
+        {loading ? (
+          <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-indigo-500" /></div>
+        ) : routes.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-slate-500">
+            <MapPin className="h-12 w-12 mb-4 text-slate-300" />
+            <p className="text-lg font-medium">No routes yet</p>
+            <p className="text-sm mt-1">Click "Create Route" to add your first delivery route</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto -mx-3 sm:mx-0">
+            <div className="inline-block min-w-full align-middle">
+              <DataTable data={routes} columns={columns} />
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Add/Edit Route Modal */}
-      <Dialog open={routeModalOpen} onOpenChange={setRouteModalOpen}>
-        <DialogContent onClose={() => setRouteModalOpen(false)}>
+      {/* Add/Edit Modal */}
+      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+        <DialogContent onClose={() => setModalOpen(false)} className="max-w-[95vw] sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>{selectedRoute ? "Edit Route" : "Create Route"}</DialogTitle>
-            <DialogDescription>
-              {selectedRoute
-                ? "Update route information"
-                : "Create a new route"}
-            </DialogDescription>
+            <DialogDescription>{selectedRoute ? "Update route information" : "Create a new delivery route"}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
-              <label className="text-sm font-medium">Route Name</label>
-              <Input
-                defaultValue={selectedRoute?.name}
-                placeholder="Route A - Central Riyadh"
-                className="mt-1"
-              />
+              <label className="text-sm font-medium">Route Name <span className="text-red-500">*</span></label>
+              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Dubai South Route" className="mt-1" />
             </div>
             <div>
-              <label className="text-sm font-medium">Assign Van</label>
-              <Select defaultValue={selectedRoute?.vanId} className="mt-1">
-                <option value="">Select van</option>
-                {dummyVans.map((van) => (
-                  <option key={van.id} value={van.id}>
-                    {van.vanCode} - {van.mainRepName || "No Driver"}
-                  </option>
-                ))}
-              </Select>
+              <label className="text-sm font-medium">Area / Zone</label>
+              <Input value={form.area} onChange={(e) => setForm({ ...form, area: e.target.value })} placeholder="e.g. Dubai South" className="mt-1" />
             </div>
             <div>
-              <label className="text-sm font-medium">Shop Count</label>
-              <Input
-                type="number"
-                defaultValue={selectedRoute?.shopCount}
-                placeholder="15"
-                className="mt-1"
-              />
+              <label className="text-sm font-medium">Description</label>
+              <Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="e.g. Covers Jebel Ali industrial area" className="mt-1" />
             </div>
+            {error && <p className="text-sm text-red-500">{error}</p>}
           </div>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setRouteModalOpen(false)}
-              className="cursor-pointer"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={() => setRouteModalOpen(false)}
-              className="cursor-pointer"
-            >
-              Save
+            <Button variant="outline" onClick={() => setModalOpen(false)} className="cursor-pointer">Cancel</Button>
+            <Button onClick={save} disabled={saving} className="cursor-pointer">
+              {saving ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Saving…</> : "Save Route"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -250,13 +207,3 @@ export default function RoutesPage() {
     </div>
   )
 }
-
-
-
-
-
-
-
-
-
-

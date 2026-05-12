@@ -1,10 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Select } from "@/components/ui/select"
 import { OrderStatusBadge } from "@/components/OrderStatusBadge"
 import {
   Dialog,
@@ -14,94 +13,130 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { dummyOrders } from "@/lib/dummy-data"
-import { Order, DeliveryStatus } from "@/lib/types"
-import { format } from "date-fns"
-import { CheckCircle, XCircle, AlertCircle } from "lucide-react"
+import { CheckCircle, XCircle, Loader2, Navigation } from "lucide-react"
+import { getDeliveries, updateDeliveryStatus, getDeliveryNavigation } from "@/lib/api/driver"
 
 export default function MobileOrdersPage() {
-  const [orders, setOrders] = useState(dummyOrders.filter(o => {
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const orderDate = new Date(o.deliveryDate)
-    orderDate.setHours(0, 0, 0, 0)
-    return orderDate.getTime() === today.getTime()
-  }))
+  const [orders, setOrders] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
   const [statusModalOpen, setStatusModalOpen] = useState(false)
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
+  const [selectedOrder, setSelectedOrder] = useState<any>(null)
+  const [selectedStatus, setSelectedStatus] = useState("DELIVERED")
   const [failureReason, setFailureReason] = useState("")
+  const [updating, setUpdating] = useState(false)
 
-  const handleStatusUpdate = (status: DeliveryStatus) => {
-    if (selectedOrder) {
-      setOrders(orders.map(o => 
-        o.id === selectedOrder.id 
-          ? { ...o, status: status as any, deliveryStatus: status }
-          : o
+  useEffect(() => {
+    getDeliveries()
+      .then((res: any) => setOrders(res.data ?? []))
+      .catch((err: any) => setError(err.message))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const handleStatusUpdate = async () => {
+    if (!selectedOrder) return
+    setUpdating(true)
+    try {
+      await updateDeliveryStatus(selectedOrder.id, selectedStatus, failureReason)
+      setOrders(orders.map((o: any) =>
+        o.id === selectedOrder.id ? { ...o, status: selectedStatus } : o
       ))
       setStatusModalOpen(false)
       setSelectedOrder(null)
+      setFailureReason("")
+    } catch (err: any) {
+      alert(err.message)
+    } finally {
+      setUpdating(false)
     }
+  }
+
+  const handleNavigate = async (orderId: string) => {
+    try {
+      const res: any = await getDeliveryNavigation(orderId)
+      window.open(res.data.navigationUrls.googleMaps, "_blank")
+    } catch (err: any) {
+      alert(err.message)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+      </div>
+    )
   }
 
   return (
     <div className="p-4 space-y-4">
-      <h1 className="text-2xl font-bold">Today's Orders</h1>
-      
+      <h1 className="text-2xl font-bold">Today&apos;s Orders</h1>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">{error}</div>
+      )}
+
+      {orders.length === 0 && !error && (
+        <div className="text-center text-gray-500 py-12">No deliveries assigned today</div>
+      )}
+
       <div className="space-y-3">
-        {orders.map((order) => (
+        {orders.map((order: any) => (
           <Card key={order.id} className="hover:bg-gray-50">
             <CardContent className="p-4">
               <div className="flex justify-between items-start mb-3">
                 <div>
-                  <p className="font-semibold">{order.orderNumber}</p>
-                  <p className="text-sm text-gray-600">{order.customerName}</p>
-                  <p className="text-xs text-gray-500">{order.customerAddress}</p>
+                  <p className="font-semibold">{order.odooRef ?? order.id.slice(0, 8)}</p>
+                  <p className="text-sm text-gray-600">{order.customer?.name}</p>
+                  <p className="text-xs text-gray-500">{order.customer?.address}</p>
                 </div>
                 <OrderStatusBadge status={order.status} />
               </div>
-              
+
               <div className="space-y-2 mb-3">
-                {order.items.map((item) => (
+                {(order.items ?? []).map((item: any) => (
                   <div key={item.id} className="flex justify-between text-sm">
-                    <span>{item.productName}</span>
-                    <span>{item.quantity} {item.unit}</span>
+                    <span>{item.product?.name}</span>
+                    <span>{item.quantity} {item.product?.unit}</span>
                   </div>
                 ))}
               </div>
-              
+
               <div className="flex justify-between items-center pt-3 border-t">
-                <span className="font-semibold">SAR {order.totalAmount.toFixed(2)}</span>
+                <span className="font-semibold">SAR {(order.totalAmount ?? 0).toFixed(2)}</span>
                 <div className="flex gap-2">
-                  {order.status === "pending" || order.status === "out-for-delivery" ? (
+                  {/* Navigate button — always visible if customer has location */}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleNavigate(order.id)}
+                    className="text-indigo-600 border-indigo-300"
+                  >
+                    <Navigation className="h-4 w-4 mr-1" />
+                    Navigate
+                  </Button>
+
+                  {(order.status === "PENDING" || order.status === "IN_PROGRESS") && (
                     <>
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => {
                           setSelectedOrder(order)
+                          setSelectedStatus("DELIVERED")
                           setStatusModalOpen(true)
                         }}
                         className="text-green-600 border-green-600"
                       >
                         <CheckCircle className="h-4 w-4 mr-1" />
-                        Delivered
+                        Done
                       </Button>
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => {
                           setSelectedOrder(order)
-                          setStatusModalOpen(true)
-                        }}
-                        className="text-orange-600 border-orange-600"
-                      >
-                        Partial
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          setSelectedOrder(order)
+                          setSelectedStatus("FAILED")
                           setStatusModalOpen(true)
                         }}
                         className="text-red-600 border-red-600"
@@ -110,7 +145,7 @@ export default function MobileOrdersPage() {
                         Failed
                       </Button>
                     </>
-                  ) : null}
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -124,17 +159,21 @@ export default function MobileOrdersPage() {
           <DialogHeader>
             <DialogTitle>Update Delivery Status</DialogTitle>
             <DialogDescription>
-              Order {selectedOrder?.orderNumber}
+              {selectedOrder?.customer?.name}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
               <label className="text-sm font-medium">Status</label>
-              <Select className="mt-1">
-                <option value="delivered">Delivered</option>
-                <option value="partially-delivered">Partially Delivered</option>
-                <option value="failed">Failed</option>
-              </Select>
+              <select
+                className="mt-1 w-full border rounded-md px-3 py-2 text-sm"
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value)}
+              >
+                <option value="DELIVERED">Delivered</option>
+                <option value="PARTIALLY_DELIVERED">Partially Delivered</option>
+                <option value="FAILED">Failed</option>
+              </select>
             </div>
             <div>
               <label className="text-sm font-medium">Notes / Failure Reason</label>
@@ -147,10 +186,9 @@ export default function MobileOrdersPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setStatusModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={() => handleStatusUpdate("delivered")}>
+            <Button variant="outline" onClick={() => setStatusModalOpen(false)}>Cancel</Button>
+            <Button onClick={handleStatusUpdate} disabled={updating}>
+              {updating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               Update Status
             </Button>
           </DialogFooter>

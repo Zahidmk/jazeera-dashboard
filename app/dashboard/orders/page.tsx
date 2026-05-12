@@ -1,12 +1,12 @@
 "use client"
 
-import { useState } from "react"
+// ─── REAL DATA: fetched live from Odoo via the backend ───────────────────────
+
+import { useState, useEffect, useCallback } from "react"
 import { Topbar } from "@/components/Topbar"
 import { DataTable, Column } from "@/components/DataTable"
-import { OrderStatusBadge } from "@/components/OrderStatusBadge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Select } from "@/components/ui/select"
 import {
   Dialog,
   DialogContent,
@@ -15,280 +15,218 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { dummyOrders, dummyVans, dummyRoutes, dummyReps } from "@/lib/dummy-data"
-import { Order, OrderStatus } from "@/lib/types"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { fetchOdooOrders, OdooOrder } from "@/lib/api/odoo"
 import { format } from "date-fns"
 import { Eye, RefreshCw } from "lucide-react"
 
-export default function OrdersPage() {
-  const [orders, setOrders] = useState(dummyOrders)
-  const [dateFilter, setDateFilter] = useState<string>("today")
-  const [vanFilter, setVanFilter] = useState<string>("all")
-  const [routeFilter, setRouteFilter] = useState<string>("all")
-  const [driverFilter, setDriverFilter] = useState<string>("all")
-  const [statusFilter, setStatusFilter] = useState<string>("all")
-  const [orderModalOpen, setOrderModalOpen] = useState(false)
-  const [statusModalOpen, setStatusModalOpen] = useState(false)
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
+const ORDER_STATE_LABELS: Record<string, string> = {
+  draft: "Quotation",
+  sent: "Quotation Sent",
+  sale: "Sales Order",
+  done: "Locked",
+  cancel: "Cancelled",
+}
 
-  const filteredOrders = orders.filter((order) => {
-    if (vanFilter !== "all" && order.vanId !== vanFilter) return false
-    if (routeFilter !== "all" && order.routeId !== routeFilter) return false
-    if (driverFilter !== "all" && order.driverId !== driverFilter) return false
-    if (statusFilter !== "all" && order.status !== statusFilter) return false
-    
-    if (dateFilter === "today") {
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
-      if (order.deliveryDate < today) return false
+const ORDER_STATE_COLORS: Record<string, string> = {
+  draft: "bg-gray-100 text-gray-700",
+  sent: "bg-blue-100 text-blue-700",
+  sale: "bg-green-100 text-green-700",
+  done: "bg-purple-100 text-purple-700",
+  cancel: "bg-red-100 text-red-700",
+}
+
+export default function OrdersPage() {
+  const [orders, setOrders] = useState<OdooOrder[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [search, setSearch] = useState("")
+  const [stateFilter, setStateFilter] = useState("all")
+  const [selectedOrder, setSelectedOrder] = useState<OdooOrder | null>(null)
+  const [modalOpen, setModalOpen] = useState(false)
+
+  const loadData = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const data = await fetchOdooOrders(500)
+      setOrders(data)
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setLoading(false)
     }
-    
-    return true
+  }, [])
+
+  useEffect(() => { loadData() }, [loadData])
+
+  const filtered = orders.filter((o) => {
+    const ms = !search ||
+      o.orderNumber.toLowerCase().includes(search.toLowerCase()) ||
+      o.customerName.toLowerCase().includes(search.toLowerCase())
+    const mst = stateFilter === "all" || o.state === stateFilter
+    return ms && mst
   })
 
-  const ordersColumns: Column<Order>[] = [
+  const totalRevenue = filtered.reduce((sum, o) => sum + o.totalAmount, 0)
+
+  const columns: Column<OdooOrder>[] = [
+    { header: "Order #", accessor: "orderNumber" },
+    { header: "Customer", accessor: "customerName" },
     {
-      header: "Order No",
-      accessor: "orderNumber",
-    },
-    {
-      header: "Customer",
-      accessor: "customerName",
-    },
-    {
-      header: "Products",
-      accessor: (row) => `${row.items.length} item(s)`,
+      header: "Items",
+      accessor: (o) => `${o.items.length} item(s)`,
     },
     {
       header: "Amount",
-      accessor: (row) => `SAR ${row.totalAmount.toFixed(2)}`,
+      accessor: (o) => `SAR ${o.totalAmount.toLocaleString("en-US", { minimumFractionDigits: 2 })}`,
     },
     {
       header: "Status",
-      accessor: (row) => <OrderStatusBadge status={row.status} />,
+      accessor: (o) => (
+        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${ORDER_STATE_COLORS[o.state] || "bg-gray-100 text-gray-700"}`}>
+          {ORDER_STATE_LABELS[o.state] || o.state}
+        </span>
+      ),
     },
     {
-      header: "Delivery Date",
-      accessor: (row) => format(row.deliveryDate, "MMM dd, yyyy"),
-    },
-    {
-      header: "Van",
-      accessor: "vanCode",
-    },
-    {
-      header: "Driver",
-      accessor: "driverName",
+      header: "Date",
+      accessor: (o) => {
+        try { return format(new Date(o.dateOrder), "MMM dd, yyyy") }
+        catch { return o.dateOrder }
+      },
     },
     {
       header: "Actions",
-      accessor: (row) => (
-        <div className="flex gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              setSelectedOrder(row)
-              setOrderModalOpen(true)
-            }}
-          >
-            <Eye className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              setSelectedOrder(row)
-              setStatusModalOpen(true)
-            }}
-          >
-            <RefreshCw className="h-4 w-4" />
-          </Button>
-        </div>
+      accessor: (o) => (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="cursor-pointer"
+          onClick={() => { setSelectedOrder(o); setModalOpen(true) }}
+        >
+          <Eye className="h-4 w-4 mr-1" />
+          View
+        </Button>
       ),
     },
   ]
 
   return (
     <div className="min-h-screen bg-background">
-      <Topbar title="Orders & Deliveries" />
+      <Topbar
+        title="Orders (Live from Odoo)"
+        actions={
+          <Button size="sm" variant="outline" onClick={loadData} disabled={loading} className="cursor-pointer">
+            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+            Refresh
+          </Button>
+        }
+      />
       <div className="p-4 lg:p-6 space-y-6">
+        {error && (
+          <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-800">
+            ❌ {error}
+          </div>
+        )}
+
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card>
+            <CardHeader className="pb-3"><CardTitle className="text-sm font-medium text-slate-600">Total Orders</CardTitle></CardHeader>
+            <CardContent><div className="text-2xl font-bold">{loading ? "…" : orders.length.toLocaleString()}</div><p className="text-xs text-slate-500 mt-1">from Odoo</p></CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-3"><CardTitle className="text-sm font-medium text-slate-600">Total Revenue</CardTitle></CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{loading ? "…" : `SAR ${totalRevenue.toLocaleString("en-US", { minimumFractionDigits: 2 })}`}</div>
+              <p className="text-xs text-slate-500 mt-1">filtered orders</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-3"><CardTitle className="text-sm font-medium text-slate-600">Sales Orders</CardTitle></CardHeader>
+            <CardContent><div className="text-2xl font-bold text-green-600">{loading ? "…" : orders.filter(o => o.state === "sale").length}</div><p className="text-xs text-slate-500 mt-1">confirmed</p></CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-3"><CardTitle className="text-sm font-medium text-slate-600">Locked/Done</CardTitle></CardHeader>
+            <CardContent><div className="text-2xl font-bold text-purple-600">{loading ? "…" : orders.filter(o => o.state === "done").length}</div><p className="text-xs text-slate-500 mt-1">completed</p></CardContent>
+          </Card>
+        </div>
+
         {/* Filters */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-          <Select
-            value={dateFilter}
-            onChange={(e) => setDateFilter(e.target.value)}
+        <div className="flex flex-wrap gap-3 items-center">
+          <Input
+            placeholder="Search order # or customer…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-64"
+          />
+          <select
+            value={stateFilter}
+            onChange={(e) => setStateFilter(e.target.value)}
+            className="border rounded-md px-3 py-2 text-sm bg-white"
           >
-            <option value="all">All Dates</option>
-            <option value="today">Today</option>
-            <option value="week">This Week</option>
-            <option value="month">This Month</option>
-          </Select>
-          <Select
-            value={vanFilter}
-            onChange={(e) => setVanFilter(e.target.value)}
-          >
-            <option value="all">All Vans</option>
-            {dummyVans.map((van) => (
-              <option key={van.id} value={van.id}>
-                {van.vanCode}
-              </option>
+            <option value="all">All Statuses</option>
+            {Object.entries(ORDER_STATE_LABELS).map(([k, v]) => (
+              <option key={k} value={k}>{v}</option>
             ))}
-          </Select>
-          <Select
-            value={routeFilter}
-            onChange={(e) => setRouteFilter(e.target.value)}
-          >
-            <option value="all">All Routes</option>
-            {dummyRoutes.map((route) => (
-              <option key={route.id} value={route.id}>
-                {route.name}
-              </option>
-            ))}
-          </Select>
-          <Select
-            value={driverFilter}
-            onChange={(e) => setDriverFilter(e.target.value)}
-          >
-            <option value="all">All Drivers</option>
-            {dummyReps.map((rep) => (
-              <option key={rep.id} value={rep.id}>
-                {rep.name}
-              </option>
-            ))}
-          </Select>
-          <Select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <option value="all">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="out-for-delivery">Out for Delivery</option>
-            <option value="delivered">Delivered</option>
-            <option value="failed">Failed</option>
-            <option value="returned">Returned</option>
-          </Select>
+          </select>
+          <span className="text-sm text-slate-500">
+            {loading ? "Loading…" : `${filtered.length} of ${orders.length} orders`}
+          </span>
         </div>
 
         {/* Orders Table */}
-        <div className="overflow-x-auto">
-          <DataTable data={filteredOrders} columns={ordersColumns} />
-        </div>
+        {loading ? (
+          <div className="flex items-center justify-center py-20 text-slate-500">
+            <RefreshCw className="h-6 w-6 animate-spin mr-3" />
+            Loading live orders from Odoo…
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <DataTable data={filtered} columns={columns} />
+          </div>
+        )}
       </div>
 
-      {/* Order Details Modal */}
-      <Dialog open={orderModalOpen} onOpenChange={setOrderModalOpen}>
-        <DialogContent onClose={() => setOrderModalOpen(false)} className="max-w-2xl">
+      {/* Order Detail Modal */}
+      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+        <DialogContent onClose={() => setModalOpen(false)} className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Order Details - {selectedOrder?.orderNumber}</DialogTitle>
-            <DialogDescription>
-              Complete order information and delivery timeline
-            </DialogDescription>
+            <DialogTitle>Order {selectedOrder?.orderNumber}</DialogTitle>
+            <DialogDescription>Customer: {selectedOrder?.customerName}</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium text-gray-500">Customer</label>
-                <p className="text-sm font-semibold">{selectedOrder?.customerName}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-500">Phone</label>
-                <p className="text-sm">{selectedOrder?.customerPhone}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-500">Address</label>
-                <p className="text-sm">{selectedOrder?.customerAddress}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-500">Status</label>
-                <div className="mt-1">
-                  {selectedOrder && <OrderStatusBadge status={selectedOrder.status} />}
-                </div>
-              </div>
+          <div className="space-y-3 py-4 max-h-96 overflow-y-auto">
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div><span className="text-slate-500">Status:</span> <strong>{ORDER_STATE_LABELS[selectedOrder?.state || ""] || selectedOrder?.state}</strong></div>
+              <div><span className="text-slate-500">Date:</span> <strong>{selectedOrder?.dateOrder ? (() => { try { return format(new Date(selectedOrder.dateOrder), "MMM dd, yyyy HH:mm") } catch { return selectedOrder.dateOrder } })() : "—"}</strong></div>
+              <div className="col-span-2"><span className="text-slate-500">Total:</span> <strong className="text-lg">SAR {selectedOrder?.totalAmount.toLocaleString("en-US", { minimumFractionDigits: 2 })}</strong></div>
             </div>
-            
-            <div>
-              <label className="text-sm font-medium text-gray-500">Order Items</label>
-              <div className="mt-2 space-y-2">
-                {selectedOrder?.items.map((item) => (
-                  <div key={item.id} className="flex justify-between border rounded p-2">
-                    <div>
-                      <p className="font-medium">{item.productName}</p>
-                      <p className="text-sm text-gray-500">
-                        {item.quantity} {item.unit} × SAR {item.price.toFixed(2)}
-                      </p>
+            <div className="mt-4">
+              <h4 className="font-medium mb-2 text-sm">Order Lines</h4>
+              <div className="space-y-2">
+                {selectedOrder?.items.map((item, i) => (
+                  <div key={i} className="border rounded p-3 text-sm">
+                    <div className="flex justify-between">
+                      <span className="font-medium">{item.productName}</span>
+                      <span>SAR {item.subtotal.toFixed(2)}</span>
                     </div>
-                    <p className="font-semibold">SAR {item.total.toFixed(2)}</p>
+                    <div className="text-slate-500 text-xs mt-1">
+                      {item.qty} × SAR {item.unitPrice.toFixed(2)}
+                    </div>
                   </div>
                 ))}
+                {(!selectedOrder?.items || selectedOrder.items.length === 0) && (
+                  <p className="text-sm text-slate-400">No line items available.</p>
+                )}
               </div>
-            </div>
-            
-            <div className="flex justify-between items-center pt-2 border-t">
-              <span className="text-lg font-semibold">Total Amount</span>
-              <span className="text-lg font-bold">SAR {selectedOrder?.totalAmount.toFixed(2)}</span>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOrderModalOpen(false)}>
-              Close
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Update Status Modal */}
-      <Dialog open={statusModalOpen} onOpenChange={setStatusModalOpen}>
-        <DialogContent onClose={() => setStatusModalOpen(false)}>
-          <DialogHeader>
-            <DialogTitle>Update Delivery Status</DialogTitle>
-            <DialogDescription>
-              Update status for order {selectedOrder?.orderNumber}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div>
-              <label className="text-sm font-medium">Current Status</label>
-              <div className="mt-1">
-                {selectedOrder && <OrderStatusBadge status={selectedOrder.status} />}
-              </div>
-            </div>
-            <div>
-              <label className="text-sm font-medium">New Status</label>
-              <Select className="mt-1">
-                <option value="pending">Pending</option>
-                <option value="out-for-delivery">Out for Delivery</option>
-                <option value="delivered">Delivered</option>
-                <option value="partially-delivered">Partially Delivered</option>
-                <option value="failed">Failed</option>
-                <option value="returned">Returned</option>
-              </Select>
-            </div>
-            <div>
-              <label className="text-sm font-medium">Notes</label>
-              <Input
-                placeholder="Optional notes"
-                className="mt-1"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setStatusModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={() => setStatusModalOpen(false)}>Update Status</Button>
+            <Button variant="outline" onClick={() => setModalOpen(false)} className="cursor-pointer">Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
   )
 }
-
-
-
-
-
-
-
-
-
-

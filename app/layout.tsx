@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { Sidebar, SidebarProvider } from "@/components/Sidebar";
+import { AuthProvider } from "@/lib/context/AuthContext";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Middleware Dashboard",
+  title: "Jazeera Admin Dashboard",
   description: "Middleware System Dashboard for Van Sales App and Odoo ERP",
 };
 
@@ -28,15 +28,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <SidebarProvider>
-          <div className="flex h-screen overflow-hidden bg-slate-50">
-            <Sidebar />
-            <main className="flex-1 overflow-y-auto lg:pl-20 w-full">
-              {children}
-            </main>
-          </div>
-        </SidebarProvider>
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );
 }
+

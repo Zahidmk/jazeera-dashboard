@@ -1,37 +1,49 @@
 "use client"
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { dummyRoutes, dummyOrders, dummyVanStock, dummyVans } from "@/lib/dummy-data"
-import { Package, ShoppingCart, DollarSign, Truck } from "lucide-react"
+import { useEffect, useState } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Package, ShoppingCart, DollarSign, Truck, Loader2 } from "lucide-react"
 import Link from "next/link"
+import { getDriverHome } from "@/lib/api/driver"
 
 export default function MobileHomePage() {
-  // Get today's route (mock - would come from API)
-  const todayRoute = dummyRoutes[0]
-  const assignedVan = dummyVans.find(v => v.id === todayRoute.vanId)
-  
-  // Today's deliveries
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const todayOrders = dummyOrders.filter(o => {
-    const orderDate = new Date(o.deliveryDate)
-    orderDate.setHours(0, 0, 0, 0)
-    return orderDate.getTime() === today.getTime()
-  })
-  const completedDeliveries = todayOrders.filter(o => o.status === "delivered").length
-  const pendingDeliveries = todayOrders.filter(o => o.status === "pending" || o.status === "out-for-delivery").length
-  
-  // Starting stock
-  const vanStock = dummyVanStock.filter(s => s.vanId === todayRoute.vanId)
-  const totalStockValue = vanStock.reduce((sum, s) => sum + s.totalValue, 0)
+  const [data, setData] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+
+  useEffect(() => {
+    getDriverHome()
+      .then((res: any) => setData(res.data))
+      .catch((err: any) => setError(err.message))
+      .finally(() => setLoading(false))
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="p-4">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-sm">{error}</div>
+      </div>
+    )
+  }
+
+  const stats = data?.stats ?? {}
+  const driver = data?.driver ?? {}
 
   return (
     <div className="p-4 space-y-4">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold">Today's Route</h1>
-          <p className="text-gray-600">{todayRoute.name}</p>
+          <p className="text-gray-600">{driver.name ?? "Driver"}</p>
+          <p className="text-sm text-gray-400">Van: {driver.van ?? "Not Assigned"}</p>
         </div>
         <div className="h-12 w-12 rounded-full bg-indigo-100 flex items-center justify-center">
           <Truck className="h-6 w-6 text-indigo-600" />
@@ -45,17 +57,19 @@ export default function MobileHomePage() {
             <CardTitle className="text-sm font-medium text-gray-600">Deliveries</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{completedDeliveries}/{todayOrders.length}</div>
-            <p className="text-xs text-gray-500 mt-1">{pendingDeliveries} pending</p>
+            <div className="text-2xl font-bold">
+              {(stats.totalDeliveries ?? 0) - (stats.pendingDeliveries ?? 0)}/{stats.totalDeliveries ?? 0}
+            </div>
+            <p className="text-xs text-gray-500 mt-1">{stats.pendingDeliveries ?? 0} pending</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Starting Stock</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">Van Stock</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">SAR {totalStockValue.toFixed(0)}</div>
-            <p className="text-xs text-gray-500 mt-1">{vanStock.length} products</p>
+            <div className="text-2xl font-bold">{stats.totalStockItems ?? 0}</div>
+            <p className="text-xs text-gray-500 mt-1">items loaded</p>
           </CardContent>
         </Card>
       </div>
@@ -71,14 +85,14 @@ export default function MobileHomePage() {
                 </div>
                 <div>
                   <p className="font-semibold">Order Delivery</p>
-                  <p className="text-sm text-gray-500">{todayOrders.length} orders today</p>
+                  <p className="text-sm text-gray-500">{stats.totalDeliveries ?? 0} orders today</p>
                 </div>
               </div>
-              <div className="text-right">
-                <div className={`text-sm font-semibold ${pendingDeliveries > 0 ? 'text-orange-600' : 'text-green-600'}`}>
-                  {pendingDeliveries} pending
+              {(stats.pendingDeliveries ?? 0) > 0 && (
+                <div className="text-sm font-semibold text-orange-600">
+                  {stats.pendingDeliveries} pending
                 </div>
-              </div>
+              )}
             </CardContent>
           </Card>
         </Link>

@@ -11,7 +11,7 @@ import { Separator } from "@/components/ui/separator"
 import { DataTable, Column } from "@/components/DataTable"
 import { dummyVans, dummyReps, dummySyncLogs } from "@/lib/dummy-data"
 import { format } from "date-fns"
-import { ArrowLeft, Edit, Package, MapPin, RefreshCw, AlertTriangle, Clock, Truck, User, Phone, Mail, Calendar, Route, Building2, Weight, CheckCircle2, XCircle } from "lucide-react"
+import { ArrowLeft, Edit, Package, MapPin, RefreshCw, AlertTriangle, Clock, Truck, User, Phone, Mail, Calendar, Route, Building2, Weight, CheckCircle2, XCircle, Warehouse } from "lucide-react"
 import { SyncLog } from "@/lib/types"
 
 export default function VanDetailPage() {
@@ -77,6 +77,10 @@ export default function VanDetailPage() {
             <Button variant="outline" onClick={() => router.push("/dashboard/vans-reps")}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back
+            </Button>
+            <Button variant="outline" onClick={() => router.push(`/dashboard/vans/${vanId}/warehouse`)}>
+              <Warehouse className="h-4 w-4 mr-2" />
+              Warehouse
             </Button>
             <Button>
               <Edit className="h-4 w-4 mr-2" />
