@@ -19,6 +19,8 @@ import {
   BarChart3,
   Warehouse,
   Users,
+  FileText,
+  Calendar,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -39,6 +41,8 @@ const navigation = [
   { name: "Orders & Deliveries", href: "/dashboard/orders", icon: ShoppingCart },
   { name: "Cash Sales", href: "/dashboard/cash-sales", icon: DollarSign },
   { name: "Leads & Customers", href: "/dashboard/leads", icon: UserPlus },
+  { name: "Quotations", href: "/dashboard/quotations", icon: FileText },
+  { name: "Client Visits", href: "/dashboard/visits", icon: Calendar },
   { name: "Reports", href: "/dashboard/reports", icon: BarChart3 },
   { name: "Sync Queue & Logs", href: "/dashboard/sync", icon: ListChecks },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },

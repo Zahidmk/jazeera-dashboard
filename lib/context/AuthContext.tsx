@@ -42,14 +42,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const login = async (email: string, password: string) => {
-    const res = await apiCall<{ success: boolean; data: { token: string; driver: AuthUser } }>(
+    const res = await apiCall<{ success: boolean; data: { token: string; user: AuthUser } }>(
       '/api/v1/auth/login',
       {
         method: 'POST',
         body: JSON.stringify({ email, password }),
       }
     )
-    const userData = res.data.driver
+    const userData = res.data.user
     const token = res.data.token
     setToken(token)
     localStorage.setItem('jazeera_user', JSON.stringify(userData))
