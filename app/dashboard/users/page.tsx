@@ -36,7 +36,7 @@ interface ApiResponse<T> {
   data: T
 }
 
-const ROLES = ["ADMIN", "MANAGER", "DRIVER", "RELAY_REP"]
+const ROLES = ["ADMIN", "MANAGER", "DRIVER", "RELAY_REP", "STORE_KEEPER", "SALESMAN"]
 
 export default function UsersPage() {
   const [users, setUsers] = useState<UserRecord[]>([])
@@ -133,6 +133,8 @@ export default function UsersPage() {
       MANAGER: "bg-purple-100 text-purple-800",
       DRIVER: "bg-indigo-100 text-indigo-800",
       RELAY_REP: "bg-blue-100 text-blue-800",
+      STORE_KEEPER: "bg-amber-100 text-amber-800",
+      SALESMAN: "bg-emerald-100 text-emerald-800",
     }
     return (
       <span className={`px-2 py-1 text-xs font-semibold rounded-full ${colors[role] || "bg-gray-100 text-gray-800"}`}>
