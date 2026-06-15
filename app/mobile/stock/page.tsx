@@ -29,7 +29,7 @@ export default function MobileStockPage() {
   useEffect(() => {
     getVanInventory()
       .then((res: Record<string, unknown>) => {
-        setInventory((res.inventory as Record<string, unknown>[]) ?? [])
+        setInventory(((res.data as any)?.items as Record<string, unknown>[]) ?? [])
       })
       .catch((err: unknown) => {
         console.error(err)
@@ -49,7 +49,7 @@ export default function MobileStockPage() {
         notes || undefined
       )
       const res = await getVanInventory() as Record<string, unknown>
-      setInventory((res.inventory as Record<string, unknown>[]) ?? [])
+      setInventory(((res.data as any)?.items as Record<string, unknown>[]) ?? [])
       setDamageModalOpen(false)
       setReturnModalOpen(false)
       setSelectedItem(null)
