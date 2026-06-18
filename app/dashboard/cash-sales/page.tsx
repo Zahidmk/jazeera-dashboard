@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Topbar } from "@/components/Topbar"
 import { DataTable, Column } from "@/components/DataTable"
 import { PaymentMethodBadge } from "@/components/PaymentMethodBadge"
@@ -15,18 +15,86 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { dummyCashSales, dummyVans, dummyReps } from "@/lib/dummy-data"
+import { apiCall } from "@/lib/api/client"
 import { CashSale } from "@/lib/types"
 import { format } from "date-fns"
-import { Eye, Download, DollarSign, CreditCard, Wallet, TrendingUp } from "lucide-react"
+import { Eye, Download, Loader2, RefreshCw } from "lucide-react"
 
 export default function CashSalesPage() {
-  const [sales, setSales] = useState(dummyCashSales)
+  const [sales, setSales] = useState<CashSale[]>([])
+  const [drivers, setDrivers] = useState<any[]>([])
+  const [vans, setVans] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
   const [dateFilter, setDateFilter] = useState<string>("all")
   const [vanFilter, setVanFilter] = useState<string>("all")
   const [driverFilter, setDriverFilter] = useState<string>("all")
   const [receiptModalOpen, setReceiptModalOpen] = useState(false)
   const [selectedSale, setSelectedSale] = useState<CashSale | null>(null)
+
+  const loadData = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const [salesRes, driversRes, vansRes] = await Promise.all([
+        apiCall<{ success: boolean; data: any[] }>("/api/v1/admin/sales?limit=500"),
+        apiCall<{ success: boolean; data: any[] }>("/api/v1/admin/drivers"),
+        apiCall<{ success: boolean; data: any[] }>("/api/v1/admin/vans"),
+      ])
+
+      const fetchedVans = vansRes.data || []
+      const fetchedDrivers = driversRes.data || []
+      const fetchedSales = salesRes.data || []
+
+      setVans(fetchedVans)
+      setDrivers(fetchedDrivers)
+
+      const mappedSales: CashSale[] = fetchedSales.map((sale) => {
+        const vanForDriver = fetchedVans.find(
+          (v: any) => v.driver?.id === sale.driverId || v.driverId === sale.driverId
+        )
+        const vanCode = vanForDriver ? vanForDriver.plateNumber : "Van —"
+        const vanId = vanForDriver ? vanForDriver.id : ""
+
+        return {
+          id: sale.id,
+          saleNumber: sale.odooSaleId ? `SO-${sale.odooSaleId}` : `CS-${sale.id.slice(0, 8).toUpperCase()}`,
+          vanId,
+          vanCode,
+          driverId: sale.driverId,
+          driverName: sale.driver?.name || "Unknown Driver",
+          customerId: sale.customerId || "",
+          customerName: sale.customer?.name || "Walk-in Customer",
+          customerPhone: sale.customer?.phone || "—",
+          totalAmount: sale.totalAmount,
+          paymentMethod: sale.saleType === "CREDIT" ? "card" : "cash",
+          createdAt: new Date(sale.createdAt),
+          receiptUrl: sale.receiptUrl || undefined,
+          items: (sale.items || []).map((item: any) => ({
+            id: item.id,
+            productId: item.productId,
+            productName: item.product?.name || "Unknown Product",
+            quantity: item.quantity,
+            unit: item.product?.unit || "pcs",
+            price: item.unitPrice,
+            total: item.unitPrice * item.quantity * (1 - (item.discount || 0) / 100),
+          })),
+        }
+      })
+
+      setSales(mappedSales)
+    } catch (err: any) {
+      console.error("Failed to load cash sales:", err)
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    loadData()
+  }, [loadData])
 
   const filteredSales = sales.filter((sale) => {
     if (vanFilter !== "all" && sale.vanId !== vanFilter) return false
@@ -40,6 +108,10 @@ export default function CashSalesPage() {
       const weekAgo = new Date()
       weekAgo.setDate(weekAgo.getDate() - 7)
       if (sale.createdAt < weekAgo) return false
+    } else if (dateFilter === "month") {
+      const monthAgo = new Date()
+      monthAgo.setMonth(monthAgo.getMonth() - 1)
+      if (sale.createdAt < monthAgo) return false
     }
 
     return true
@@ -106,7 +178,6 @@ export default function CashSalesPage() {
   ]
 
   const handleExport = () => {
-    // Export functionality placeholder
     const csv = [
       ["Sale ID", "Customer", "Amount", "Payment Method", "Date", "Van", "Driver"],
       ...filteredSales.map((sale) => [
@@ -135,19 +206,37 @@ export default function CashSalesPage() {
       <Topbar
         title="Cash Sales & Payments"
         actions={
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleExport}
-            className="cursor-pointer"
-            title="Export to CSV"
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={loadData}
+              disabled={loading}
+              className="cursor-pointer"
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+              Refresh
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleExport}
+              className="cursor-pointer"
+              title="Export to CSV"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </Button>
+          </div>
         }
       />
       <div className="p-4 lg:p-6 space-y-6">
+        {error && (
+          <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-800">
+            ❌ {error}
+          </div>
+        )}
+
         {/* Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
@@ -159,7 +248,7 @@ export default function CashSalesPage() {
                 SAR {totalSales.toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </div>
               <p className="text-xs text-slate-500 mt-1">
-                {filteredSales.length} transactions
+                {loading ? "..." : `${filteredSales.length} transactions`}
               </p>
             </CardContent>
           </Card>
@@ -173,7 +262,7 @@ export default function CashSalesPage() {
                 SAR {cashSales.toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </div>
               <p className="text-xs text-slate-500 mt-1">
-                {filteredSales.filter(s => s.paymentMethod === "cash").length} cash sales
+                {loading ? "..." : `${filteredSales.filter(s => s.paymentMethod === "cash").length} cash sales`}
               </p>
             </CardContent>
           </Card>
@@ -187,7 +276,7 @@ export default function CashSalesPage() {
                 SAR {cardSales.toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </div>
               <p className="text-xs text-slate-500 mt-1">
-                {filteredSales.filter(s => s.paymentMethod === "card").length} card sales
+                {loading ? "..." : `${filteredSales.filter(s => s.paymentMethod === "card").length} card sales`}
               </p>
             </CardContent>
           </Card>
@@ -223,9 +312,9 @@ export default function CashSalesPage() {
             onChange={(e) => setVanFilter(e.target.value)}
           >
             <option value="all">All Vans</option>
-            {dummyVans.map((van) => (
+            {vans.map((van) => (
               <option key={van.id} value={van.id}>
-                {van.vanCode}
+                {van.plateNumber}
               </option>
             ))}
           </Select>
@@ -234,7 +323,7 @@ export default function CashSalesPage() {
             onChange={(e) => setDriverFilter(e.target.value)}
           >
             <option value="all">All Drivers</option>
-            {dummyReps.map((rep) => (
+            {drivers.map((rep) => (
               <option key={rep.id} value={rep.id}>
                 {rep.name}
               </option>
@@ -243,9 +332,16 @@ export default function CashSalesPage() {
         </div>
 
         {/* Sales Table */}
-        <div className="overflow-x-auto">
-          <DataTable data={filteredSales} columns={salesColumns} />
-        </div>
+        {loading ? (
+          <div className="flex items-center justify-center py-20 text-slate-500">
+            <Loader2 className="h-6 w-6 animate-spin mr-3 text-indigo-500" />
+            Loading cash sales...
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <DataTable data={filteredSales} columns={salesColumns} />
+          </div>
+        )}
       </div>
 
       {/* Receipt Modal */}
