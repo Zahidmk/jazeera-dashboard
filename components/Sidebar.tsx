@@ -44,7 +44,6 @@ const navigation = [
   { name: "Cash Sales", href: "/dashboard/cash-sales", icon: DollarSign },
   { name: "Leads & Customers", href: "/dashboard/leads", icon: UserPlus },
   { name: "Quotations", href: "/dashboard/quotations", icon: FileText },
-  { name: "Client Visits", href: "/dashboard/visits", icon: Calendar },
   { name: "Reports", href: "/dashboard/reports", icon: BarChart3 },
   { name: "Sync Queue & Logs", href: "/dashboard/sync", icon: ListChecks },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
