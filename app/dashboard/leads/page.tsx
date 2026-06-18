@@ -5,6 +5,7 @@ import { Topbar } from "@/components/Topbar"
 import { DataTable, Column } from "@/components/DataTable"
 import { LeadApprovalDialog } from "@/components/LeadApprovalDialog"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Select } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Lead, Customer } from "@/lib/types"
@@ -52,6 +53,7 @@ export default function LeadsPage() {
   const [customers, setCustomers] = useState<Customer[]>([])
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [agentFilter, setAgentFilter] = useState<string>("all")
+  const [searchQuery, setSearchQuery] = useState("")
   const [leadModalOpen, setLeadModalOpen] = useState(false)
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null)
   const [loading, setLoading] = useState(true)
@@ -116,6 +118,28 @@ export default function LeadsPage() {
   const filteredLeads = leads.filter((lead) => {
     if (statusFilter !== "all" && lead.status !== statusFilter) return false
     if (agentFilter !== "all" && lead.agentId !== agentFilter) return false
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase()
+      return (
+        lead.name.toLowerCase().includes(q) ||
+        lead.phone.toLowerCase().includes(q) ||
+        (lead.businessName || "").toLowerCase().includes(q) ||
+        lead.agentName.toLowerCase().includes(q)
+      )
+    }
+    return true
+  })
+
+  const filteredCustomers = customers.filter((customer) => {
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase()
+      return (
+        customer.name.toLowerCase().includes(q) ||
+        customer.phone.toLowerCase().includes(q) ||
+        (customer.address || "").toLowerCase().includes(q) ||
+        (customer.email || "").toLowerCase().includes(q)
+      )
+    }
     return true
   })
 
@@ -193,14 +217,20 @@ export default function LeadsPage() {
         }
       />
       <div className="p-4 lg:p-6 space-y-6">
-        <Tabs defaultValue="leads" className="w-full">
+        <Tabs defaultValue="leads" className="w-full" onValueChange={() => setSearchQuery("")}>
           <TabsList>
             <TabsTrigger value="leads">Leads ({leads.length})</TabsTrigger>
             <TabsTrigger value="customers">Customers ({customers.length})</TabsTrigger>
           </TabsList>
-
+ 
           <TabsContent value="leads" className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Input
+                placeholder="Search leads..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full sm:w-64"
+              />
               <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
                 <option value="all">All Status</option>
                 <option value="pending">Pending</option>
@@ -231,8 +261,16 @@ export default function LeadsPage() {
           </TabsContent>
 
           <TabsContent value="customers" className="space-y-6">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Input
+                placeholder="Search customers..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full sm:w-64"
+              />
+            </div>
             <div className="overflow-x-auto">
-              <DataTable data={customers} columns={customersColumns} />
+              <DataTable data={filteredCustomers} columns={customersColumns} />
             </div>
           </TabsContent>
         </Tabs>
