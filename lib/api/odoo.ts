@@ -76,6 +76,8 @@ export async function fetchOdooCustomers(limit = 500): Promise<OdooCustomer[]> {
 export interface OdooStockItem {
   productId: number
   productName: string
+  sku: string | null
+  imageUrl: string | null
   totalQty: number
   locations: { location: string; qty: number }[]
 }

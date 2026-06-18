@@ -23,6 +23,7 @@ type StockRow = {
   totalQty: number
   totalValue: number
   locations: { location: string; qty: number }[]
+  imageUrl: string | null
 }
 
 export default function StockPage() {
@@ -59,6 +60,7 @@ export default function StockPage() {
           totalQty: qty,
           totalValue: qty * p.priceRetail,
           locations: si?.locations || [],
+          imageUrl: p.imageUrl || si?.imageUrl || null,
         }
       })
       setRows(merged)
@@ -99,6 +101,20 @@ export default function StockPage() {
   const totalValue = filtered.reduce((sum, r) => sum + r.totalValue, 0)
 
   const stockColumns: Column<StockRow>[] = [
+    {
+      header: "Image",
+      accessor: (r) => r.imageUrl ? (
+        <img
+          src={r.imageUrl}
+          alt={r.productName}
+          className="h-10 w-10 object-contain rounded-md border border-slate-200 bg-white"
+        />
+      ) : (
+        <div className="h-10 w-10 rounded-md border border-dashed border-slate-200 flex items-center justify-center bg-slate-50 text-slate-400 text-[10px] font-medium">
+          No Img
+        </div>
+      ),
+    },
     { header: "Product", accessor: "productName" },
     { header: "SKU", accessor: "sku" },
     { header: "Category", accessor: (r) => r.category || "—" },
