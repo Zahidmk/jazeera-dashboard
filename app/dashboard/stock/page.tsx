@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { fetchOdooProducts, fetchOdooStock, OdooStockItem } from "@/lib/api/odoo"
-import { AlertTriangle, RefreshCw } from "lucide-react"
+import { AlertTriangle, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"
 
@@ -34,6 +34,8 @@ export default function StockPage() {
   const [categoryFilter, setCategoryFilter] = useState("all")
   const [syncing, setSyncing] = useState(false)
   const [syncMsg, setSyncMsg] = useState<string | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 20
 
   const loadData = useCallback(async () => {
     setLoading(true)
@@ -73,6 +75,10 @@ export default function StockPage() {
 
   useEffect(() => { loadData() }, [loadData])
 
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [search, categoryFilter])
+
   const handleSync = async () => {
     setSyncing(true)
     setSyncMsg(null)
@@ -99,6 +105,13 @@ export default function StockPage() {
   const lowStockItems = filtered.filter((r) => r.totalQty < 10 && r.totalQty >= 0)
   const outOfStockItems = filtered.filter((r) => r.totalQty <= 0)
   const totalValue = filtered.reduce((sum, r) => sum + r.totalValue, 0)
+
+  const totalItems = filtered.length
+  const totalPages = Math.ceil(totalItems / itemsPerPage)
+  const paginatedData = filtered.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  )
 
   const stockColumns: Column<StockRow>[] = [
     {
@@ -260,8 +273,70 @@ export default function StockPage() {
             Loading live stock data from Odoo…
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <DataTable data={filtered} columns={stockColumns} />
+          <div className="space-y-4">
+            <div className="overflow-x-auto">
+              <DataTable data={paginatedData} columns={stockColumns} />
+            </div>
+
+            {/* Pagination Controls */}
+            {totalItems > 0 && (
+              <div className="flex items-center justify-between border border-slate-200 bg-white px-4 py-3 sm:px-6 rounded-xl shadow-xs">
+                <div className="flex flex-1 justify-between sm:hidden">
+                  <Button
+                    variant="outline"
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="cursor-pointer"
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className="cursor-pointer"
+                  >
+                    Next
+                  </Button>
+                </div>
+                <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm text-slate-700">
+                      Showing <span className="font-semibold">{totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1}</span> to{" "}
+                      <span className="font-semibold">{Math.min(currentPage * itemsPerPage, totalItems)}</span> of{" "}
+                      <span className="font-semibold">{totalItems}</span> products
+                    </p>
+                  </div>
+                  <div>
+                    <nav className="isolate inline-flex items-center gap-2" aria-label="Pagination">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                        className="cursor-pointer"
+                      >
+                        <ChevronLeft className="h-4 w-4 mr-1" />
+                        Previous
+                      </Button>
+                      <span className="text-sm font-medium text-slate-700 px-3">
+                        Page {currentPage} of {totalPages}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                        disabled={currentPage === totalPages}
+                        className="cursor-pointer"
+                      >
+                        Next
+                        <ChevronRight className="h-4 w-4 ml-1" />
+                      </Button>
+                    </nav>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
