@@ -23,6 +23,7 @@ import {
   Calendar,
   ChevronLeft,
   ChevronRight,
+  AlertTriangle,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -34,6 +35,7 @@ const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Vans & Reps", href: "/dashboard/vans-reps", icon: Truck },
   { name: "Van Warehouse", href: "/dashboard/warehouse", icon: Warehouse },
+  { name: "Damaged Stock", href: "/dashboard/damaged-stock", icon: AlertTriangle },
   { name: "Users & Roles", href: "/dashboard/users", icon: UserCog },
   { name: "Customers", href: "/dashboard/customers", icon: Users },
 

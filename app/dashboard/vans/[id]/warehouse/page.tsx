@@ -35,6 +35,7 @@ type InventoryRow = {
   priceRetail: number
   loadedQty: number
   soldQty: number
+  damagedQty: number
   remainingQty: number
   revenue: number
 }
@@ -51,6 +52,7 @@ type ShiftInfo = {
 type Summary = {
   totalLoaded: number
   totalSold: number
+  totalDamaged: number
   totalRemaining: number
   totalRevenue: number
   deliveries: Record<string, number>
@@ -163,6 +165,14 @@ export default function VanWarehousePage() {
       accessor: (row) => (
         <span className="font-medium text-green-600">
           {row.soldQty} {row.unit}
+        </span>
+      ),
+    },
+    {
+      header: "Damaged",
+      accessor: (row) => (
+        <span className="font-medium text-red-600">
+          {row.damagedQty} {row.unit}
         </span>
       ),
     },
@@ -283,7 +293,7 @@ export default function VanWarehousePage() {
         {!loading && data && (
           <>
             {/* Summary stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               <StatCard
                 title="Total Loaded"
                 value={data.summary.totalLoaded}
@@ -297,6 +307,13 @@ export default function VanWarehousePage() {
                 sub="Units sold today"
                 icon={TrendingUp}
                 color="bg-green-500"
+              />
+              <StatCard
+                title="Total Damaged"
+                value={data.summary.totalDamaged ?? 0}
+                sub="Units adjusted (damaged) today"
+                icon={AlertTriangle}
+                color="bg-red-500"
               />
               <StatCard
                 title="Remaining Stock"
