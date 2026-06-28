@@ -42,7 +42,7 @@ const navigation = [
   { name: "Routes", href: "/dashboard/routes", icon: MapPin },
   { name: "Live Map", href: "/dashboard/map", icon: Map },
   { name: "Stock Management", href: "/dashboard/stock", icon: Package },
-  { name: "Orders & Deliveries", href: "/dashboard/orders", icon: ShoppingCart },
+  // { name: "Orders & Deliveries", href: "/dashboard/orders", icon: ShoppingCart },
   { name: "Cash Sales", href: "/dashboard/cash-sales", icon: DollarSign },
   { name: "Leads & Customers", href: "/dashboard/leads", icon: UserPlus },
   { name: "Quotations", href: "/dashboard/quotations", icon: FileText },

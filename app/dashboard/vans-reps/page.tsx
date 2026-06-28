@@ -58,12 +58,6 @@ export default function VansRepsPage() {
   const [vanSaving, setVanSaving] = useState(false)
   const [vanError, setVanError] = useState("")
 
-  const [driverModalOpen, setDriverModalOpen] = useState(false)
-  const [selectedDriver, setSelectedDriver] = useState<DriverUser | null>(null)
-  const [driverForm, setDriverForm] = useState({ name: "", email: "", phone: "", password: "" })
-  const [driverSaving, setDriverSaving] = useState(false)
-  const [driverError, setDriverError] = useState("")
-
   const [assignModalOpen, setAssignModalOpen] = useState(false)
   const [assignVan, setAssignVan] = useState<VanRecord | null>(null)
   const [assignDriverId, setAssignDriverId] = useState("")
@@ -132,46 +126,6 @@ export default function VansRepsPage() {
       setVanError(err instanceof Error ? err.message : "Failed to save van")
     } finally {
       setVanSaving(false)
-    }
-  }
-
-  const openAddDriver = () => {
-    setSelectedDriver(null)
-    setDriverForm({ name: "", email: "", phone: "", password: "" })
-    setDriverError("")
-    setDriverModalOpen(true)
-  }
-
-  const openEditDriver = (driver: DriverUser) => {
-    setSelectedDriver(driver)
-    setDriverForm({ name: driver.name, email: driver.email, phone: driver.phone || "", password: "" })
-    setDriverError("")
-    setDriverModalOpen(true)
-  }
-
-  const saveDriver = async () => {
-    if (!driverForm.name.trim() || !driverForm.email.trim()) { setDriverError("Name and email are required"); return }
-    if (!selectedDriver && !driverForm.password) { setDriverError("Password is required for new drivers"); return }
-    setDriverSaving(true)
-    setDriverError("")
-    try {
-      if (selectedDriver) {
-        await apiCall(`/api/v1/admin/users/${selectedDriver.id}`, {
-          method: "PATCH",
-          body: JSON.stringify({ name: driverForm.name, email: driverForm.email, phone: driverForm.phone || null, ...(driverForm.password && { password: driverForm.password }) }),
-        })
-      } else {
-        await apiCall("/api/v1/admin/users", {
-          method: "POST",
-          body: JSON.stringify({ name: driverForm.name, email: driverForm.email, phone: driverForm.phone || null, password: driverForm.password, role: "DRIVER" }),
-        })
-      }
-      setDriverModalOpen(false)
-      loadData()
-    } catch (err: unknown) {
-      setDriverError(err instanceof Error ? err.message : "Failed to save driver")
-    } finally {
-      setDriverSaving(false)
     }
   }
 
@@ -245,7 +199,7 @@ export default function VansRepsPage() {
       header: "Actions",
       accessor: (row) => (
         <div className="flex gap-1">
-          <Button variant="ghost" size="sm" onClick={() => openEditDriver(row)} className="cursor-pointer" title="Edit"><Edit className="h-4 w-4" /></Button>
+
           <Button variant="ghost" size="sm" className="cursor-pointer text-xs"
             onClick={() => apiCall(`/api/v1/admin/users/${row.id}`, { method: "PATCH", body: JSON.stringify({ isActive: !row.isActive }) }).then(loadData)}>
             {row.isActive ? "Deactivate" : "Activate"}
@@ -261,9 +215,6 @@ export default function VansRepsPage() {
         title="Vans & Drivers"
         actions={
           <>
-            <Button size="sm" variant="outline" onClick={openAddDriver} className="hidden sm:flex cursor-pointer">
-              <Plus className="h-4 w-4 mr-2" />Add Driver
-            </Button>
             <Button size="sm" onClick={openAddVan} className="cursor-pointer">
               <Plus className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Add Van</span>
             </Button>
@@ -350,45 +301,6 @@ export default function VansRepsPage() {
             <Button variant="outline" onClick={() => setVanModalOpen(false)} className="cursor-pointer">Cancel</Button>
             <Button onClick={saveVan} disabled={vanSaving} className="cursor-pointer">
               {vanSaving ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Saving…</> : "Save Van"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Driver Modal */}
-      <Dialog open={driverModalOpen} onOpenChange={setDriverModalOpen}>
-        <DialogContent onClose={() => setDriverModalOpen(false)} className="max-w-[95vw] sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{selectedDriver ? "Edit Driver" : "Add New Driver"}</DialogTitle>
-            <DialogDescription>{selectedDriver ? "Update driver information" : "Create a new driver account"}</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div>
-              <label className="text-sm font-medium">Full Name <span className="text-red-500">*</span></label>
-              <Input value={driverForm.name} onChange={(e) => setDriverForm({ ...driverForm, name: e.target.value })} placeholder="Ahmed Al Rashidi" className="mt-1" />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium">Email <span className="text-red-500">*</span></label>
-                <Input type="email" value={driverForm.email} onChange={(e) => setDriverForm({ ...driverForm, email: e.target.value })} placeholder="driver@jazeera.com" className="mt-1" />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Phone</label>
-                <Input value={driverForm.phone} onChange={(e) => setDriverForm({ ...driverForm, phone: e.target.value })} placeholder="+966501234567" className="mt-1" />
-              </div>
-            </div>
-            <div>
-              <label className="text-sm font-medium">
-                {selectedDriver ? "New Password (leave blank to keep current)" : <>Password <span className="text-red-500">*</span></>}
-              </label>
-              <Input type="password" value={driverForm.password} onChange={(e) => setDriverForm({ ...driverForm, password: e.target.value })} placeholder="Minimum 6 characters" className="mt-1" />
-            </div>
-            {driverError && <p className="text-sm text-red-500">{driverError}</p>}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDriverModalOpen(false)} className="cursor-pointer">Cancel</Button>
-            <Button onClick={saveDriver} disabled={driverSaving} className="cursor-pointer">
-              {driverSaving ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Saving…</> : "Save Driver"}
             </Button>
           </DialogFooter>
         </DialogContent>
