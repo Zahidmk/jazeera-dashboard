@@ -7,7 +7,7 @@ A comprehensive admin dashboard for managing the Middleware System that connects
 - **Dashboard Overview**: Real-time KPIs, sync metrics, and recent activities
 - **Vans & Reps Management**: Manage vans, representatives, and their assignments
 - **Relay Reps**: Handle backup and replacement representatives
-- **Sync Queue & Logs**: Monitor sync operations and view detailed logs
+- **Sync Queue & Logs**: Monitor sync operations and view detailed logs 
 - **API Endpoints**: Manage and test API endpoints
 - **System Health**: Monitor server performance, CPU, memory, and latency
 - **Settings**: Configure environment, sync settings, API keys, and webhooks
