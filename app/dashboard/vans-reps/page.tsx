@@ -190,29 +190,11 @@ export default function VansRepsPage() {
     },
   ]
 
-  const driversColumns: Column<DriverUser>[] = [
-    { header: "Name", accessor: "name" },
-    { header: "Email", accessor: "email" },
-    { header: "Phone", accessor: (row) => row.phone || <span className="text-slate-400">—</span> },
-    { header: "Status", accessor: (row) => <StatusBadge status={row.isActive ? "active" : "inactive"} /> },
-    {
-      header: "Actions",
-      accessor: (row) => (
-        <div className="flex gap-1">
-
-          <Button variant="ghost" size="sm" className="cursor-pointer text-xs"
-            onClick={() => apiCall(`/api/v1/admin/users/${row.id}`, { method: "PATCH", body: JSON.stringify({ isActive: !row.isActive }) }).then(loadData)}>
-            {row.isActive ? "Deactivate" : "Activate"}
-          </Button>
-        </div>
-      ),
-    },
-  ]
 
   return (
     <div className="min-h-screen bg-background">
       <Topbar
-        title="Vans & Drivers"
+        title="Vans"
         actions={
           <>
             <Button size="sm" onClick={openAddVan} className="cursor-pointer">
@@ -223,11 +205,9 @@ export default function VansRepsPage() {
       />
 
       <div className="p-3 sm:p-4 lg:p-6 xl:p-8 space-y-4 sm:space-y-6">
-        <div className="grid gap-3 sm:gap-4 grid-cols-2 md:grid-cols-4">
+        <div className="grid gap-3 sm:gap-4 grid-cols-2 md:grid-cols-3">
           <Card><CardHeader className="pb-3"><CardTitle className="text-sm font-medium text-slate-600">Total Vans</CardTitle></CardHeader>
             <CardContent><div className="text-2xl font-bold">{vans.length}</div><p className="text-xs text-slate-500 mt-1">{vans.filter((v) => v.isActive).length} active</p></CardContent></Card>
-          <Card><CardHeader className="pb-3"><CardTitle className="text-sm font-medium text-slate-600">Drivers</CardTitle></CardHeader>
-            <CardContent><div className="text-2xl font-bold">{drivers.length}</div><p className="text-xs text-slate-500 mt-1">{drivers.filter((d) => d.isActive).length} active</p></CardContent></Card>
           <Card><CardHeader className="pb-3"><CardTitle className="text-sm font-medium text-slate-600">Assigned Vans</CardTitle></CardHeader>
             <CardContent><div className="text-2xl font-bold">{vans.filter((v) => v.driver).length}</div><p className="text-xs text-slate-500 mt-1">With drivers</p></CardContent></Card>
           <Card><CardHeader className="pb-3"><CardTitle className="text-sm font-medium text-slate-600">Loaded Vans</CardTitle></CardHeader>
@@ -255,17 +235,7 @@ export default function VansRepsPage() {
           )}
         </div>
 
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Users className="h-5 w-5 text-slate-600" />
-            <h2 className="text-xl font-semibold">Drivers</h2>
-          </div>
-          {loading ? (
-            <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-indigo-500" /></div>
-          ) : (
-            <div className="overflow-x-auto -mx-3 sm:mx-0"><div className="inline-block min-w-full align-middle"><DataTable data={drivers} columns={driversColumns} /></div></div>
-          )}
-        </div>
+
       </div>
 
       {/* Van Modal */}
