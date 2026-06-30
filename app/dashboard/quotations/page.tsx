@@ -22,7 +22,7 @@ export default function QuotationsPage() {
     setLoading(true)
     try {
       const res = await getQuotations(statusFilter)
-      setQuotations(res.data || [])
+      setQuotations((res.data || []).filter((q: any) => q.status !== 'DRAFT'))
     } catch (e) {
       console.error("Failed to fetch quotations", e)
     } finally {
@@ -195,7 +195,6 @@ export default function QuotationsPage() {
           <div className="w-full sm:w-64">
             <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
               <option value="all">All Statuses</option>
-              <option value="draft">Draft</option>
               <option value="submitted">Submitted</option>
               <option value="approved">Approved</option>
               <option value="rejected">Rejected</option>
