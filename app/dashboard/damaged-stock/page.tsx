@@ -21,6 +21,8 @@ import {
   Clock,
   Eye,
   FileSpreadsheet,
+  CheckCircle,
+  XCircle,
 } from "lucide-react"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -36,6 +38,7 @@ type DamagedItem = {
   driverName: string
   uploadedAt: string
   reason: string
+  status: "PENDING" | "APPROVED" | "REJECTED"
 }
 
 type DamagedStockReport = {
@@ -73,6 +76,18 @@ export default function DamagedStockPage() {
   useEffect(() => {
     load()
   }, [load])
+
+  const handleResolve = async (id: string, action: "APPROVE" | "REJECT") => {
+    try {
+      await apiCall(`/api/v1/storekeeper/damaged-stock/${id}/resolve`, {
+        method: "POST",
+        body: JSON.stringify({ action }),
+      })
+      load()
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : "Failed to resolve item")
+    }
+  }
 
   // ─── Filter List ────────────────────────────────────────────────────────────
   const filteredItems = data?.items.filter((item) => {
@@ -126,9 +141,9 @@ export default function DamagedStockPage() {
       ),
     },
     {
-      header: "Damaged Qty",
+      header: "Qty",
       accessor: (row) => (
-        <Badge variant="destructive" className="font-semibold px-2 py-0.5">
+        <Badge variant={row.reason === 'RETURN' ? 'outline' : 'destructive'} className="font-semibold px-2 py-0.5">
           {row.quantity} units
         </Badge>
       ),
@@ -169,12 +184,48 @@ export default function DamagedStockPage() {
         )
       },
     },
+    {
+      header: "Status / Action",
+      accessor: (row) => {
+        if (row.status === "PENDING") {
+          return (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 border-green-200 text-green-600 hover:bg-green-50 px-2 cursor-pointer"
+                onClick={() => handleResolve(row.adjustmentId, "APPROVE")}
+              >
+                <CheckCircle className="h-4 w-4 mr-1" /> Approve
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 border-red-200 text-red-600 hover:bg-red-50 px-2 cursor-pointer"
+                onClick={() => handleResolve(row.adjustmentId, "REJECT")}
+              >
+                <XCircle className="h-4 w-4 mr-1" /> Reject
+              </Button>
+            </div>
+          )
+        }
+        
+        return (
+          <Badge 
+            variant={row.status === "APPROVED" ? "default" : "secondary"}
+            className={row.status === "APPROVED" ? "bg-green-500 hover:bg-green-600" : "bg-slate-300 text-slate-700"}
+          >
+            {row.status}
+          </Badge>
+        )
+      }
+    }
   ]
 
   return (
     <div className="min-h-screen bg-slate-50/50">
       <Topbar
-        title="Damaged Stock Analysis"
+        title="Stock Returns & Damages"
         actions={
           <Button variant="outline" onClick={load} disabled={loading} className="cursor-pointer">
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
@@ -192,9 +243,9 @@ export default function DamagedStockPage() {
                 <AlertTriangle className="h-7 w-7 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-slate-900">Damaged Stock Report</h1>
+                <h1 className="text-2xl font-bold text-slate-900">Stock Returns & Damages</h1>
                 <p className="text-sm text-slate-500">
-                  Analyze, review, and audit reported damaged stock items across all vans for any date.
+                  Analyze, review, and audit reported damaged stock and unsold returns across all vans.
                 </p>
               </div>
             </div>
