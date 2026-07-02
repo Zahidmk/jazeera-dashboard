@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/dialog"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { apiCall } from "@/lib/api/client"
-import { Plus, Edit, UserPlus, Package, Truck, Users, Loader2, Eye } from "lucide-react"
+import { Plus, Edit, UserPlus, Package, Truck, Users, Loader2, Eye, Archive } from "lucide-react"
 
 interface DriverUser {
   id: string
@@ -152,6 +152,16 @@ export default function VansRepsPage() {
     }
   }
 
+  const archiveVan = async (id: string) => {
+    if (!confirm("Are you sure you want to archive this van? This will also archive its location in Odoo.")) return;
+    try {
+      await apiCall(`/api/v1/admin/vans/${id}`, { method: "DELETE" });
+      loadData();
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Failed to archive van");
+    }
+  }
+
   const vansColumns: Column<VanRecord>[] = [
     { header: "Plate Number", accessor: "plateNumber" },
     { header: "Model", accessor: (row) => row.model || <span className="text-slate-400">—</span> },
@@ -185,6 +195,7 @@ export default function VansRepsPage() {
           <Button variant="ghost" size="sm" onClick={() => router.push(`/dashboard/vans/${row.id}`)} className="cursor-pointer" title="View"><Eye className="h-4 w-4" /></Button>
           <Button variant="ghost" size="sm" onClick={() => openEditVan(row)} className="cursor-pointer" title="Edit"><Edit className="h-4 w-4" /></Button>
           <Button variant="ghost" size="sm" onClick={() => openAssign(row)} className="cursor-pointer" title="Assign Driver"><UserPlus className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="sm" onClick={() => archiveVan(row.id)} className="cursor-pointer text-red-500 hover:text-red-700 hover:bg-red-50" title="Archive Van"><Archive className="h-4 w-4" /></Button>
         </div>
       ),
     },
