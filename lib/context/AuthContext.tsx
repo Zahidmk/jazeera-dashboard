@@ -8,7 +8,9 @@ interface AuthUser {
   id: string
   name: string
   email: string
+  phone?: string | null
   role: string
+  createdAt?: string
   van?: { id: string; plateNumber: string } | null
 }
 
@@ -17,6 +19,7 @@ interface AuthContextType {
   isLoading: boolean
   login: (email: string, password: string) => Promise<void>
   logout: () => void
+  updateUser: (updates: Partial<AuthUser>) => void
 }
 
 const AuthContext = createContext<AuthContextType | null>(null)
@@ -63,8 +66,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.push('/login')
   }
 
+  const updateUser = (updates: Partial<AuthUser>) => {
+    setUser((prev) => {
+      if (!prev) return prev
+      const next = { ...prev, ...updates }
+      localStorage.setItem('jazeera_user', JSON.stringify(next))
+      return next
+    })
+  }
+
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, login, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   )
