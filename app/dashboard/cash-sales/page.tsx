@@ -119,10 +119,14 @@ export default function CashSalesPage() {
     return true
   })
 
+  // Grand Total (incl. VAT) — totalAmount is the pre-tax subtotal; vatAmount
+  // is the real figure from Odoo once synced, else estimated at 15%.
+  const saleGrandTotal = (sale: CashSale) => sale.totalAmount + (sale.vatAmount ?? sale.totalAmount * 0.15)
+
   // Calculate stats
-  const totalSales = filteredSales.reduce((sum, sale) => sum + sale.totalAmount, 0)
-  const cashSales = filteredSales.filter(s => s.paymentMethod === "cash").reduce((sum, s) => sum + s.totalAmount, 0)
-  const cardSales = filteredSales.filter(s => s.paymentMethod === "card").reduce((sum, s) => sum + s.totalAmount, 0)
+  const totalSales = filteredSales.reduce((sum, sale) => sum + saleGrandTotal(sale), 0)
+  const cashSales = filteredSales.filter(s => s.paymentMethod === "cash").reduce((sum, s) => sum + saleGrandTotal(s), 0)
+  const cardSales = filteredSales.filter(s => s.paymentMethod === "card").reduce((sum, s) => sum + saleGrandTotal(s), 0)
   const avgSale = filteredSales.length > 0 ? totalSales / filteredSales.length : 0
 
   const salesColumns: Column<CashSale>[] = [
@@ -140,7 +144,7 @@ export default function CashSalesPage() {
     },
     {
       header: "Amount",
-      accessor: (row) => `SAR ${row.totalAmount.toFixed(2)}`,
+      accessor: (row) => `SAR ${saleGrandTotal(row).toFixed(2)}`,
     },
     {
       header: "Payment Method",
@@ -185,7 +189,7 @@ export default function CashSalesPage() {
       ...filteredSales.map((sale) => [
         sale.saleNumber,
         sale.customerName,
-        sale.totalAmount.toFixed(2),
+        saleGrandTotal(sale).toFixed(2),
         sale.paymentMethod,
         format(sale.createdAt, "MMM dd, yyyy HH:mm"),
         sale.vanCode,
