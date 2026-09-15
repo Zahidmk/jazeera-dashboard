@@ -89,17 +89,24 @@ export function Topbar({ title, actions, breadcrumbs }: TopbarProps) {
 
           {/* User info + Logout */}
           <div className="flex items-center gap-2 pl-1 sm:pl-2 border-l border-gray-200 ml-1">
-            <div className="hidden sm:flex flex-col items-end">
-              <span className="text-xs font-semibold text-gray-800 leading-tight">
-                {user?.name ?? 'Admin'}
-              </span>
-              <span className="text-xs text-gray-400 capitalize leading-tight">
-                {user?.role?.toLowerCase() ?? 'admin'}
-              </span>
-            </div>
-            <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-sm">
-              {user?.name?.charAt(0)?.toUpperCase() ?? 'A'}
-            </div>
+            <button
+              type="button"
+              onClick={() => router.push('/dashboard/profile')}
+              className="flex items-center gap-2 rounded-lg px-1 py-1 hover:bg-gray-100 cursor-pointer"
+              title="View profile"
+            >
+              <div className="hidden sm:flex flex-col items-end">
+                <span className="text-xs font-semibold text-gray-800 leading-tight">
+                  {user?.name ?? 'Admin'}
+                </span>
+                <span className="text-xs text-gray-400 capitalize leading-tight">
+                  {user?.role?.toLowerCase() ?? 'admin'}
+                </span>
+              </div>
+              <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-sm">
+                {user?.name?.charAt(0)?.toUpperCase() ?? 'A'}
+              </div>
+            </button>
             <Button
               variant="ghost"
               size="icon"
