@@ -68,6 +68,8 @@ export default function CashSalesPage() {
           customerName: sale.customer?.name || "Walk-in Customer",
           customerPhone: sale.customer?.phone || "—",
           totalAmount: sale.totalAmount,
+          subtotalAmount: sale.subtotalAmount ?? undefined,
+          vatAmount: sale.vatAmount ?? undefined,
           paymentMethod: sale.saleType === "CREDIT" ? "card" : "cash",
           createdAt: new Date(sale.createdAt),
           receiptUrl: sale.receiptUrl || undefined,
@@ -408,10 +410,11 @@ export default function CashSalesPage() {
 
               <div className="border-t pt-4 space-y-2">
                 {selectedSale && (() => {
+                  const hasRealVat = selectedSale.vatAmount != null && selectedSale.subtotalAmount != null
                   const VAT_RATE = 0.15
                   const total = selectedSale.totalAmount
-                  const subtotal = total / (1 + VAT_RATE)
-                  const vat = total - subtotal
+                  const subtotal = hasRealVat ? selectedSale.subtotalAmount! : total / (1 + VAT_RATE)
+                  const vat = hasRealVat ? selectedSale.vatAmount! : total - subtotal
                   return (
                     <>
                       <div className="flex justify-between text-sm text-gray-600">
@@ -419,7 +422,7 @@ export default function CashSalesPage() {
                         <span>SAR {subtotal.toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between text-sm text-gray-600">
-                        <span>VAT (15%)</span>
+                        <span>VAT (15%){!hasRealVat && " — estimated"}</span>
                         <span>SAR {vat.toFixed(2)}</span>
                       </div>
                     </>

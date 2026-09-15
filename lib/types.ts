@@ -237,6 +237,8 @@ export interface CashSale {
   customerPhone: string
   items: CashSaleItem[]
   totalAmount: number
+  subtotalAmount?: number // Amount before VAT, from Odoo (amount_untaxed)
+  vatAmount?: number // VAT amount, from Odoo (amount_tax) — undefined if not yet synced
   paymentMethod: PaymentMethod
   createdAt: Date
   receiptUrl?: string
