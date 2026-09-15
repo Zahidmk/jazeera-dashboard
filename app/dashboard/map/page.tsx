@@ -18,13 +18,7 @@ interface MapPin {
   title: string
   subtitle?: string
   status?: string
-  type: "delivery" | "lead" | "sale"
-}
-
-interface DeliveryItem {
-  id: string
-  status: string
-  customer: { name: string; address?: string; lat?: number; lng?: number }
+  type: "lead"
 }
 
 interface LeadItem {
@@ -36,46 +30,17 @@ interface LeadItem {
   createdAt: string
 }
 
-interface SaleItem {
-  id: string
-  totalAmount: number
-  latitude?: number
-  longitude?: number
-  customer?: { name: string }
-  createdAt: string
-}
-
 export default function MapPage() {
   const [pins, setPins] = useState<MapPin[]>([])
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState<"all" | "delivery" | "lead" | "sale">("all")
-  const [counts, setCounts] = useState({ deliveries: 0, leads: 0, sales: 0 })
+  const [filter, setFilter] = useState<"all" | "lead">("all")
+  const [counts, setCounts] = useState({ leads: 0 })
 
   const loadData = useCallback(async () => {
     setLoading(true)
     try {
       const allPins: MapPin[] = []
-      let deliveryCount = 0, leadCount = 0, saleCount = 0
-
-      // Load deliveries
-      try {
-        const res = await apiCall<{ success: boolean; data: { deliveries?: DeliveryItem[]; data?: DeliveryItem[] } }>("/api/v1/admin/deliveries?limit=200")
-        const deliveries: DeliveryItem[] = res.data?.deliveries || (res.data as unknown as DeliveryItem[]) || []
-        deliveryCount = deliveries.length
-        deliveries.forEach((d) => {
-          if (d.customer?.lat && d.customer?.lng) {
-            allPins.push({
-              id: d.id,
-              lat: d.customer.lat,
-              lng: d.customer.lng,
-              title: d.customer.name,
-              subtitle: d.customer.address,
-              status: d.status,
-              type: "delivery",
-            })
-          }
-        })
-      } catch { /* skip */ }
+      let leadCount = 0
 
       // Load leads
       try {
@@ -96,26 +61,7 @@ export default function MapPage() {
         })
       } catch { /* skip */ }
 
-      // Load cash sales
-      try {
-        const res = await apiCall<{ success: boolean; data: SaleItem[] }>("/api/v1/admin/cash-sales?limit=200")
-        const sales: SaleItem[] = res.data || []
-        saleCount = sales.length
-        sales.forEach((s) => {
-          if (s.latitude && s.longitude) {
-            allPins.push({
-              id: s.id,
-              lat: s.latitude,
-              lng: s.longitude,
-              title: s.customer?.name || "Walk-in",
-              subtitle: `SAR ${s.totalAmount}`,
-              type: "sale",
-            })
-          }
-        })
-      } catch { /* skip */ }
-
-      setCounts({ deliveries: deliveryCount, leads: leadCount, sales: saleCount })
+      setCounts({ leads: leadCount })
       setPins(allPins)
     } finally {
       setLoading(false)
@@ -178,9 +124,7 @@ export default function MapPage() {
             <div className="flex items-center gap-2">
               {/* Legend */}
               <div className="hidden sm:flex items-center gap-3 text-xs text-gray-500 mr-2">
-                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-blue-500 inline-block" /> Delivery</span>
                 <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-amber-400 inline-block" /> Lead</span>
-                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-green-500 inline-block" /> Sale</span>
               </div>
               <Button variant="outline" size="sm" onClick={loadData} disabled={loading}>
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
@@ -206,7 +150,7 @@ export default function MapPage() {
 
         {/* Info note */}
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-700">
-          <strong>📍 How pins appear:</strong> The Flutter app sends GPS coordinates when drivers submit a sale, add a lead, or when customers have a saved location. Click any pin on the map for details.
+          <strong>📍 How pins appear:</strong> The Flutter app sends GPS coordinates when drivers add a lead. Click any pin on the map for details.
         </div>
       </div>
     </div>
