@@ -1,4 +1,4 @@
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://glamourously-pernickety-evalyn.ngrok-free.dev'
+export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://glamourously-pernickety-evalyn.ngrok-free.dev'
 
 export function getToken(): string | null {
   if (typeof window === 'undefined') return null
