@@ -406,8 +406,26 @@ export default function CashSalesPage() {
                 ))}
               </div>
 
-              <div className="border-t pt-4">
-                <div className="flex justify-between items-center">
+              <div className="border-t pt-4 space-y-2">
+                {selectedSale && (() => {
+                  const VAT_RATE = 0.15
+                  const total = selectedSale.totalAmount
+                  const subtotal = total / (1 + VAT_RATE)
+                  const vat = total - subtotal
+                  return (
+                    <>
+                      <div className="flex justify-between text-sm text-gray-600">
+                        <span>Subtotal (Excl. VAT)</span>
+                        <span>SAR {subtotal.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm text-gray-600">
+                        <span>VAT (15%)</span>
+                        <span>SAR {vat.toFixed(2)}</span>
+                      </div>
+                    </>
+                  )
+                })()}
+                <div className="flex justify-between items-center pt-2 border-t">
                   <span className="text-lg font-semibold">Total Amount</span>
                   <span className="text-2xl font-bold">SAR {selectedSale?.totalAmount.toFixed(2)}</span>
                 </div>
