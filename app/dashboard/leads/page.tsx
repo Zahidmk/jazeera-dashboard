@@ -7,8 +7,7 @@ import { LeadApprovalDialog } from "@/components/LeadApprovalDialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select } from "@/components/ui/select"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Lead, Customer } from "@/lib/types"
+import { Lead } from "@/lib/types"
 import { apiCall } from "@/lib/api/client"
 import { format } from "date-fns"
 import { Check, X, RefreshCw, Loader2 } from "lucide-react"
@@ -36,21 +35,8 @@ function mapLead(l: any): Lead {
   }
 }
 
-function mapCustomer(c: any): Customer {
-  return {
-    id: c.id,
-    name: c.name,
-    phone: c.phone || "",
-    email: c.email || undefined,
-    address: c.address || "",
-    salesVolume: 0,
-    createdAt: new Date(c.createdAt),
-  }
-}
-
 export default function LeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([])
-  const [customers, setCustomers] = useState<Customer[]>([])
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [agentFilter, setAgentFilter] = useState<string>("all")
   const [searchQuery, setSearchQuery] = useState("")
@@ -73,19 +59,7 @@ export default function LeadsPage() {
     }
   }, [statusFilter])
 
-  const fetchCustomers = useCallback(async () => {
-    try {
-      const res = await apiCall<{ data: unknown[] }>(`/api/v1/admin/customers?limit=100`)
-      setCustomers((res.data || []).map(mapCustomer))
-    } catch (e) {
-      console.error("Failed to fetch customers", e)
-    }
-  }, [])
-
-  useEffect(() => {
-    fetchLeads()
-    fetchCustomers()
-  }, [fetchLeads, fetchCustomers])
+  useEffect(() => { fetchLeads() }, [fetchLeads])
 
   const handleApprove = async (leadId: string) => {
     setActionLoading(leadId + "_approve")
@@ -125,19 +99,6 @@ export default function LeadsPage() {
         lead.phone.toLowerCase().includes(q) ||
         (lead.businessName || "").toLowerCase().includes(q) ||
         lead.agentName.toLowerCase().includes(q)
-      )
-    }
-    return true
-  })
-
-  const filteredCustomers = customers.filter((customer) => {
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase()
-      return (
-        customer.name.toLowerCase().includes(q) ||
-        customer.phone.toLowerCase().includes(q) ||
-        (customer.address || "").toLowerCase().includes(q) ||
-        (customer.email || "").toLowerCase().includes(q)
       )
     }
     return true
@@ -197,83 +158,52 @@ export default function LeadsPage() {
     },
   ]
 
-  const customersColumns: Column<Customer>[] = [
-    { header: "Name", accessor: "name" },
-    { header: "Phone", accessor: "phone" },
-    { header: "Email", accessor: (row) => row.email || "N/A" },
-    { header: "Address", accessor: (row) => row.address || "N/A" },
-    { header: "Sales Volume", accessor: (row) => `SAR ${row.salesVolume.toLocaleString()}` },
-  ]
-
   return (
     <div className="min-h-screen bg-background">
       <Topbar
-        title="Leads & Customers"
+        title="Leads"
         actions={
-          <Button size="sm" onClick={() => { fetchLeads(); fetchCustomers() }}>
+          <Button size="sm" onClick={fetchLeads}>
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
         }
       />
       <div className="p-4 lg:p-6 space-y-6">
-        <Tabs defaultValue="leads" className="w-full" onValueChange={() => setSearchQuery("")}>
-          <TabsList>
-            <TabsTrigger value="leads">Leads ({leads.length})</TabsTrigger>
-            <TabsTrigger value="customers">Customers ({customers.length})</TabsTrigger>
-          </TabsList>
- 
-          <TabsContent value="leads" className="space-y-6">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Input
-                placeholder="Search leads..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full sm:w-64"
-              />
-              <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-                <option value="all">All Status</option>
-                <option value="pending">Pending</option>
-                <option value="approved">Approved</option>
-                <option value="rejected">Rejected</option>
-                <option value="converted">Converted</option>
-              </Select>
-              <Select value={agentFilter} onChange={(e) => setAgentFilter(e.target.value)}>
-                <option value="all">All Agents</option>
-                {uniqueAgents.map(([id, name]) => (
-                  <option key={id} value={id}>{name}</option>
-                ))}
-              </Select>
-            </div>
+        <div className="flex flex-col sm:flex-row gap-4">
+          <Input
+            placeholder="Search leads..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full sm:w-64"
+          />
+          <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+            <option value="all">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+            <option value="converted">Converted</option>
+          </Select>
+          <Select value={agentFilter} onChange={(e) => setAgentFilter(e.target.value)}>
+            <option value="all">All Agents</option>
+            {uniqueAgents.map(([id, name]) => (
+              <option key={id} value={id}>{name}</option>
+            ))}
+          </Select>
+        </div>
 
-            {loading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                <span className="ml-2 text-muted-foreground">Loading leads...</span>
-              </div>
-            ) : filteredLeads.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">No leads found.</div>
-            ) : (
-              <div className="overflow-x-auto">
-                <DataTable data={filteredLeads} columns={leadsColumns} />
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="customers" className="space-y-6">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Input
-                placeholder="Search customers..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full sm:w-64"
-              />
-            </div>
-            <div className="overflow-x-auto">
-              <DataTable data={filteredCustomers} columns={customersColumns} />
-            </div>
-          </TabsContent>
-        </Tabs>
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            <span className="ml-2 text-muted-foreground">Loading leads...</span>
+          </div>
+        ) : filteredLeads.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">No leads found.</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <DataTable data={filteredLeads} columns={leadsColumns} />
+          </div>
+        )}
       </div>
 
       <LeadApprovalDialog
@@ -287,9 +217,3 @@ export default function LeadsPage() {
     </div>
   )
 }
-
-
-
-
-
-

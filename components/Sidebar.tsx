@@ -44,7 +44,7 @@ const navigation = [
   { name: "Stock Management", href: "/dashboard/stock", icon: Package },
   // { name: "Orders & Deliveries", href: "/dashboard/orders", icon: ShoppingCart },
   { name: "Cash Sales", href: "/dashboard/cash-sales", icon: DollarSign },
-  { name: "Leads & Customers", href: "/dashboard/leads", icon: UserPlus },
+  { name: "Leads", href: "/dashboard/leads", icon: UserPlus },
   { name: "Quotations", href: "/dashboard/quotations", icon: FileText },
   { name: "Reports", href: "/dashboard/reports", icon: BarChart3 },
   { name: "Sync Queue & Logs", href: "/dashboard/sync", icon: ListChecks },
