@@ -2,17 +2,21 @@
 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { SyncLog } from "@/lib/types"
 import { format } from "date-fns"
 
+interface SyncLogEntry {
+  status: string
+  createdAt: string
+}
+
 interface SyncSuccessRateChartProps {
-  syncLogs: SyncLog[]
+  syncLogs: SyncLogEntry[]
 }
 
 export function SyncSuccessRateChart({ syncLogs }: SyncSuccessRateChartProps) {
   // Group syncs by hour and calculate success rate
   const hourlyData = syncLogs.reduce((acc, log) => {
-    const hour = format(log.timestamp, "HH:00")
+    const hour = format(new Date(log.createdAt), "HH:00")
     if (!acc[hour]) {
       acc[hour] = { hour, success: 0, total: 0 }
     }

@@ -2,27 +2,14 @@
 
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Van } from "@/lib/types"
 
 interface VansDistributionChartProps {
-  vans: Van[]
+  data: { name: string; value: number }[]
 }
 
 const COLORS = ["#1B60E8", "#f59e0b", "#ef4444", "#10B981"]
 
-export function VansDistributionChart({ vans }: VansDistributionChartProps) {
-  // Calculate distribution by status
-  const statusData = vans.reduce((acc, van) => {
-    const status = van.status
-    acc[status] = (acc[status] || 0) + 1
-    return acc
-  }, {} as Record<string, number>)
-
-  const statusChartData = Object.entries(statusData).map(([name, value]) => ({
-    name: name.charAt(0).toUpperCase() + name.slice(1),
-    value,
-  }))
-
+export function VansDistributionChart({ data }: VansDistributionChartProps) {
   return (
     <Card>
       <CardHeader>
@@ -34,7 +21,7 @@ export function VansDistributionChart({ vans }: VansDistributionChartProps) {
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
-                data={statusChartData}
+                data={data}
                 cx="50%"
                 cy="50%"
                 labelLine={false}
@@ -43,7 +30,7 @@ export function VansDistributionChart({ vans }: VansDistributionChartProps) {
                 fill="#8884d8"
                 dataKey="value"
               >
-                {statusChartData.map((entry, index) => (
+                {data.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
@@ -56,4 +43,3 @@ export function VansDistributionChart({ vans }: VansDistributionChartProps) {
     </Card>
   )
 }
-
