@@ -410,28 +410,32 @@ export default function CashSalesPage() {
 
               <div className="border-t pt-4 space-y-2">
                 {selectedSale && (() => {
-                  const hasRealVat = selectedSale.vatAmount != null && selectedSale.subtotalAmount != null
+                  // totalAmount is always the pre-tax subtotal (same as the
+                  // driver app's "Subtotal"). vatAmount/subtotalAmount come
+                  // from Odoo's sale order once synced — the real, authoritative
+                  // figures. Until synced, VAT is estimated at 15% on the subtotal.
                   const VAT_RATE = 0.15
-                  const total = selectedSale.totalAmount
-                  const subtotal = hasRealVat ? selectedSale.subtotalAmount! : total / (1 + VAT_RATE)
-                  const vat = hasRealVat ? selectedSale.vatAmount! : total - subtotal
+                  const hasRealVat = selectedSale.vatAmount != null
+                  const subtotal = selectedSale.subtotalAmount ?? selectedSale.totalAmount
+                  const vat = hasRealVat ? selectedSale.vatAmount! : subtotal * VAT_RATE
+                  const grandTotal = subtotal + vat
                   return (
                     <>
                       <div className="flex justify-between text-sm text-gray-600">
-                        <span>Subtotal (Excl. VAT)</span>
+                        <span>Subtotal</span>
                         <span>SAR {subtotal.toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between text-sm text-gray-600">
-                        <span>VAT (15%){!hasRealVat && " — estimated"}</span>
+                        <span>VAT (15%){!hasRealVat && " — estimated, not yet synced"}</span>
                         <span>SAR {vat.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between items-center pt-2 border-t">
+                        <span className="text-lg font-semibold">Grand Total</span>
+                        <span className="text-2xl font-bold">SAR {grandTotal.toFixed(2)}</span>
                       </div>
                     </>
                   )
                 })()}
-                <div className="flex justify-between items-center pt-2 border-t">
-                  <span className="text-lg font-semibold">Total Amount</span>
-                  <span className="text-2xl font-bold">SAR {selectedSale?.totalAmount.toFixed(2)}</span>
-                </div>
               </div>
             </div>
           </div>
