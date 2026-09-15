@@ -6,7 +6,7 @@ import { Topbar } from "@/components/Topbar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { apiCall } from "@/lib/api/client"
-import { MapPin, Truck, ClipboardList, DollarSign, Loader2, RefreshCw } from "lucide-react"
+import { MapPin, ClipboardList, Loader2, RefreshCw } from "lucide-react"
 
 // Load map only on client (no SSR)
 const DeliveryMap = dynamic(() => import("@/components/DeliveryMap"), { ssr: false })
@@ -128,15 +128,6 @@ export default function MapPage() {
 
   const stats = [
     {
-      label: "Deliveries on Map",
-      value: pins.filter((p) => p.type === "delivery").length,
-      total: counts.deliveries,
-      icon: Truck,
-      color: "text-blue-500",
-      bg: "bg-blue-50",
-      key: "delivery" as const,
-    },
-    {
       label: "Leads on Map",
       value: pins.filter((p) => p.type === "lead").length,
       total: counts.leads,
@@ -144,15 +135,6 @@ export default function MapPage() {
       color: "text-amber-500",
       bg: "bg-amber-50",
       key: "lead" as const,
-    },
-    {
-      label: "Sales on Map",
-      value: pins.filter((p) => p.type === "sale").length,
-      total: counts.sales,
-      icon: DollarSign,
-      color: "text-green-500",
-      bg: "bg-green-50",
-      key: "sale" as const,
     },
   ]
 
@@ -162,7 +144,7 @@ export default function MapPage() {
 
       <div className="flex-1 overflow-auto p-6 space-y-6">
         {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 max-w-xs gap-4">
           {stats.map((s) => (
             <Card
               key={s.key}
