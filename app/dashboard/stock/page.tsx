@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { fetchOdooProducts, fetchOdooStock, OdooStockItem } from "@/lib/api/odoo"
+import { apiCall } from "@/lib/api/client"
 import { AlertTriangle, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"
@@ -83,8 +84,10 @@ export default function StockPage() {
     setSyncing(true)
     setSyncMsg(null)
     try {
-      const res = await fetch(`${API_URL}/api/v1/sync/products`, { method: "POST" })
-      const json = await res.json()
+      const json = await apiCall<{ success: boolean; data: { created: number; updated: number }; error?: string }>(
+        "/api/v1/sync/products",
+        { method: "POST" }
+      )
       setSyncMsg(json.success
         ? `✅ Synced — Created: ${json.data.created}, Updated: ${json.data.updated}`
         : `❌ ${json.error}`)

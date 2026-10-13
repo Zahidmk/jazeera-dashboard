@@ -1,17 +1,13 @@
 // ─── Backend API utility ─────────────────────────────────────────────────────
 // Fetches real data from the Jazeera backend which talks to Odoo
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
+import { apiCall } from '@/lib/api/client'
 
+// These endpoints are ADMIN/MANAGER only — apiCall attaches the logged-in user's JWT.
 async function apiFetch<T>(path: string): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, { cache: 'no-store' })
-  if (!res.ok) {
-    const text = await res.text()
-    throw new Error(`API error ${res.status}: ${text}`)
-  }
-  const json = await res.json()
+  const json = await apiCall<{ success: boolean; data: T; error?: string }>(path, { cache: 'no-store' })
   if (!json.success) throw new Error(json.error || 'API returned failure')
-  return json.data as T
+  return json.data
 }
 
 // ─── Odoo Products ───────────────────────────────────────────────────────────

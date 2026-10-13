@@ -41,6 +41,15 @@ export async function apiCall<T>(
 
   const data = await res.json()
 
+  // Session no longer valid (expired, user deactivated, or account removed) → back to login.
+  // The login call itself returns 401 for bad credentials, so it is excluded.
+  if (res.status === 401 && typeof window !== 'undefined' && !path.startsWith('/api/v1/auth/login')) {
+    removeToken()
+    if (!window.location.pathname.startsWith('/login')) {
+      window.location.href = '/login'
+    }
+  }
+
   if (!res.ok) {
     throw new Error(data?.error || data?.message || 'Something went wrong')
   }

@@ -17,7 +17,8 @@ import {
 } from "@/components/ui/dialog"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { apiCall } from "@/lib/api/client"
-import { Plus, Edit, Loader2, Users, Shield, Truck } from "lucide-react"
+import { useAuth } from "@/lib/context/AuthContext"
+import { Plus, Edit, Loader2, Users, Shield, Truck, Briefcase } from "lucide-react"
 
 interface UserRecord {
   id: string
@@ -36,9 +37,15 @@ interface ApiResponse<T> {
   data: T
 }
 
-const ROLES = ["ADMIN", "MANAGER", "DRIVER", "RELAY_REP", "STORE_KEEPER", "SALESMAN"]
+const ROLES = ["ADMIN", "MANAGER", "DRIVER", "RELAY_REP", "STORE_KEEPER", "SALESMAN", "MERCHANDISER"]
+const MIN_PASSWORD_LENGTH = 8
 
 export default function UsersPage() {
+  const { user: me } = useAuth()
+  // Only an Admin may create/modify Admin accounts (enforced by the API, mirrored here in the UI)
+  const isAdmin = me?.role === "ADMIN"
+  const assignableRoles = isAdmin ? ROLES : ROLES.filter((r) => r !== "ADMIN")
+  const [actionError, setActionError] = useState("")
   const [users, setUsers] = useState<UserRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [roleFilter, setRoleFilter] = useState("all")
@@ -88,6 +95,7 @@ export default function UsersPage() {
   const save = async () => {
     if (!form.name.trim() || !form.email.trim()) { setError("Name and email are required"); return }
     if (!selectedUser && !form.password) { setError("Password is required for new users"); return }
+    if (form.password && form.password.length < MIN_PASSWORD_LENGTH) { setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters`); return }
     setSaving(true)
     setError("")
     try {
@@ -118,13 +126,16 @@ export default function UsersPage() {
   }
 
   const toggleStatus = async (user: UserRecord) => {
+    setActionError("")
     try {
       await apiCall(`/api/v1/admin/users/${user.id}`, {
         method: "PATCH",
         body: JSON.stringify({ isActive: !user.isActive }),
       })
       loadData()
-    } catch (err) { console.error(err) }
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "Failed to update user status")
+    }
   }
 
   const roleBadge = (role: string) => {
@@ -135,6 +146,7 @@ export default function UsersPage() {
       RELAY_REP: "bg-blue-100 text-blue-800",
       STORE_KEEPER: "bg-amber-100 text-amber-800",
       SALESMAN: "bg-emerald-100 text-emerald-800",
+      MERCHANDISER: "bg-teal-100 text-teal-800",
     }
     return (
       <span className={`px-2 py-1 text-xs font-semibold rounded-full ${colors[role] || "bg-gray-100 text-gray-800"}`}>
@@ -158,16 +170,20 @@ export default function UsersPage() {
     { header: "Status", accessor: (row) => <StatusBadge status={row.isActive ? "active" : "inactive"} /> },
     {
       header: "Actions",
-      accessor: (row) => (
-        <div className="flex gap-1">
-          <Button variant="ghost" size="sm" onClick={() => openEdit(row)} className="cursor-pointer" title="Edit">
-            <Edit className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="sm" className="cursor-pointer text-xs" onClick={() => toggleStatus(row)}>
-            {row.isActive ? "Deactivate" : "Activate"}
-          </Button>
-        </div>
-      ),
+      accessor: (row) => {
+        const lockedAdmin = row.role === "ADMIN" && !isAdmin // only Admins manage Admin accounts
+        const isSelf = row.id === me?.id
+        return (
+          <div className="flex gap-1">
+            <Button variant="ghost" size="sm" onClick={() => openEdit(row)} disabled={lockedAdmin} className="cursor-pointer" title={lockedAdmin ? "Only an Admin can edit Admin accounts" : "Edit"}>
+              <Edit className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="sm" className="cursor-pointer text-xs" onClick={() => toggleStatus(row)} disabled={lockedAdmin || isSelf} title={isSelf ? "You cannot deactivate your own account" : undefined}>
+              {row.isActive ? "Deactivate" : "Activate"}
+            </Button>
+          </div>
+        )
+      },
     },
   ]
 
@@ -184,7 +200,7 @@ export default function UsersPage() {
 
       <div className="p-3 sm:p-4 lg:p-6 xl:p-8 space-y-4 sm:space-y-6">
         {/* Summary Cards */}
-        <div className="grid gap-3 sm:gap-4 grid-cols-2 md:grid-cols-4">
+        <div className="grid gap-3 sm:gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
           <Card><CardHeader className="pb-3"><CardTitle className="text-sm font-medium text-slate-600">Total Users</CardTitle></CardHeader>
             <CardContent><div className="text-2xl font-bold">{users.length}</div><p className="text-xs text-slate-500 mt-1">{users.filter(u => u.isActive).length} active</p></CardContent></Card>
           <Card><CardHeader className="pb-3"><CardTitle className="text-sm font-medium text-slate-600"><span className="flex items-center gap-1"><Truck className="h-3.5 w-3.5" />Drivers</span></CardTitle></CardHeader>
@@ -193,7 +209,11 @@ export default function UsersPage() {
             <CardContent><div className="text-2xl font-bold">{users.filter(u => u.role === "ADMIN" || u.role === "MANAGER").length}</div><p className="text-xs text-slate-500 mt-1">with full access</p></CardContent></Card>
           <Card><CardHeader className="pb-3"><CardTitle className="text-sm font-medium text-slate-600"><span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" />Relay Reps</span></CardTitle></CardHeader>
             <CardContent><div className="text-2xl font-bold">{users.filter(u => u.role === "RELAY_REP").length}</div><p className="text-xs text-slate-500 mt-1">{users.filter(u => u.role === "RELAY_REP" && u.isActive).length} active</p></CardContent></Card>
+          <Card><CardHeader className="pb-3"><CardTitle className="text-sm font-medium text-slate-600"><span className="flex items-center gap-1"><Briefcase className="h-3.5 w-3.5" />Merchandisers</span></CardTitle></CardHeader>
+            <CardContent><div className="text-2xl font-bold">{users.filter(u => u.role === "MERCHANDISER").length}</div><p className="text-xs text-slate-500 mt-1">{users.filter(u => u.role === "MERCHANDISER" && u.isActive).length} active</p></CardContent></Card>
         </div>
+
+        {actionError && <p className="text-sm text-red-500">{actionError}</p>}
 
         {/* Filters */}
         <div className="flex gap-3 items-center flex-wrap">
@@ -246,14 +266,14 @@ export default function UsersPage() {
             <div>
               <label className="text-sm font-medium">Role</label>
               <Select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} className="mt-1">
-                {ROLES.map(r => <option key={r} value={r}>{r.replace("_", " ")}</option>)}
+                {assignableRoles.map(r => <option key={r} value={r}>{r.replace("_", " ")}</option>)}
               </Select>
             </div>
             <div>
               <label className="text-sm font-medium">
                 {selectedUser ? "New Password (leave blank to keep current)" : <>Password <span className="text-red-500">*</span></>}
               </label>
-              <Input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Minimum 6 characters" className="mt-1" />
+              <Input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Minimum 8 characters" className="mt-1" />
             </div>
             {error && <p className="text-sm text-red-500">{error}</p>}
           </div>

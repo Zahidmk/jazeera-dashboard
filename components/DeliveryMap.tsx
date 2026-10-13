@@ -9,8 +9,12 @@ interface MapPin {
   title: string
   subtitle?: string
   status?: string
-  type: "delivery" | "lead" | "sale"
+  type: "delivery" | "lead" | "sale" | "shop"
 }
+
+// Pin text can originate from user input (e.g. shop names typed in the mobile app) — never inject it as raw HTML
+const esc = (s: string) =>
+  String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;")
 
 interface DeliveryMapProps {
   pins: MapPin[]
@@ -26,6 +30,7 @@ const STATUS_COLORS: Record<string, string> = {
   delivery: "#3b82f6",
   lead: "#f59e0b",
   sale: "#22c55e",
+  shop: "#14b8a6",
 }
 
 export default function DeliveryMap({ pins, height = "500px" }: DeliveryMapProps) {
@@ -87,17 +92,18 @@ export default function DeliveryMap({ pins, height = "500px" }: DeliveryMapProps
         const typeLabel =
           pin.type === "delivery" ? "🚚 Delivery"
           : pin.type === "lead" ? "📋 Lead"
+          : pin.type === "shop" ? "🏪 Shop"
           : "💰 Sale"
 
         L.marker([pin.lat, pin.lng], { icon })
           .addTo(map)
           .bindPopup(`
             <div style="min-width:160px;font-family:sans-serif">
-              <div style="font-weight:600;margin-bottom:4px">${pin.title}</div>
-              ${pin.subtitle ? `<div style="color:#666;font-size:12px;margin-bottom:4px">${pin.subtitle}</div>` : ""}
+              <div style="font-weight:600;margin-bottom:4px">${esc(pin.title)}</div>
+              ${pin.subtitle ? `<div style="color:#666;font-size:12px;margin-bottom:4px">${esc(pin.subtitle)}</div>` : ""}
               <div style="display:flex;align-items:center;gap:6px;margin-top:6px">
                 <span style="font-size:11px;background:${color};color:white;padding:2px 8px;border-radius:999px">
-                  ${pin.status || typeLabel}
+                  ${esc(pin.status || typeLabel)}
                 </span>
               </div>
             </div>

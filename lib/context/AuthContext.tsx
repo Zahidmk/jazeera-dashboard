@@ -22,6 +22,9 @@ interface AuthContextType {
   updateUser: (updates: Partial<AuthUser>) => void
 }
 
+// The dashboard is a back-office tool. The API only serves it to these roles (everything else gets 403).
+const DASHBOARD_ROLES = ['ADMIN', 'MANAGER']
+
 const AuthContext = createContext<AuthContextType | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -54,6 +57,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     )
     const userData = res.data.user
     const token = res.data.token
+    if (!DASHBOARD_ROLES.includes(userData.role)) {
+      throw new Error('This dashboard is for Admin and Manager accounts only.')
+    }
     setToken(token)
     localStorage.setItem('jazeera_user', JSON.stringify(userData))
     setUser(userData)
