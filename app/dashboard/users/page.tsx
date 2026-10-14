@@ -18,7 +18,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { apiCall } from "@/lib/api/client"
 import { useAuth } from "@/lib/context/AuthContext"
-import { Plus, Edit, Loader2, Users, Shield, Truck, Briefcase } from "lucide-react"
+import { Plus, Edit, Loader2, Shield, Truck, Briefcase } from "lucide-react"
 
 interface UserRecord {
   id: string
@@ -37,7 +37,7 @@ interface ApiResponse<T> {
   data: T
 }
 
-const ROLES = ["ADMIN", "MANAGER", "DRIVER", "RELAY_REP", "STORE_KEEPER", "SALESMAN", "MERCHANDISER"]
+const ROLES = ["ADMIN", "MANAGER", "DRIVER", "STORE_KEEPER", "SALESMAN", "MERCHANDISER"]
 const MIN_PASSWORD_LENGTH = 8
 
 export default function UsersPage() {
@@ -143,7 +143,6 @@ export default function UsersPage() {
       ADMIN: "bg-red-100 text-red-800",
       MANAGER: "bg-purple-100 text-purple-800",
       DRIVER: "bg-indigo-100 text-indigo-800",
-      RELAY_REP: "bg-blue-100 text-blue-800",
       STORE_KEEPER: "bg-amber-100 text-amber-800",
       SALESMAN: "bg-emerald-100 text-emerald-800",
       MERCHANDISER: "bg-teal-100 text-teal-800",
@@ -200,15 +199,13 @@ export default function UsersPage() {
 
       <div className="p-3 sm:p-4 lg:p-6 xl:p-8 space-y-4 sm:space-y-6">
         {/* Summary Cards */}
-        <div className="grid gap-3 sm:gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+        <div className="grid gap-3 sm:gap-4 grid-cols-2 md:grid-cols-4">
           <Card><CardHeader className="pb-3"><CardTitle className="text-sm font-medium text-slate-600">Total Users</CardTitle></CardHeader>
             <CardContent><div className="text-2xl font-bold">{users.length}</div><p className="text-xs text-slate-500 mt-1">{users.filter(u => u.isActive).length} active</p></CardContent></Card>
           <Card><CardHeader className="pb-3"><CardTitle className="text-sm font-medium text-slate-600"><span className="flex items-center gap-1"><Truck className="h-3.5 w-3.5" />Drivers</span></CardTitle></CardHeader>
             <CardContent><div className="text-2xl font-bold">{users.filter(u => u.role === "DRIVER").length}</div><p className="text-xs text-slate-500 mt-1">{users.filter(u => u.role === "DRIVER" && u.isActive).length} active</p></CardContent></Card>
           <Card><CardHeader className="pb-3"><CardTitle className="text-sm font-medium text-slate-600"><span className="flex items-center gap-1"><Shield className="h-3.5 w-3.5" />Admins/Mgrs</span></CardTitle></CardHeader>
             <CardContent><div className="text-2xl font-bold">{users.filter(u => u.role === "ADMIN" || u.role === "MANAGER").length}</div><p className="text-xs text-slate-500 mt-1">with full access</p></CardContent></Card>
-          <Card><CardHeader className="pb-3"><CardTitle className="text-sm font-medium text-slate-600"><span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" />Relay Reps</span></CardTitle></CardHeader>
-            <CardContent><div className="text-2xl font-bold">{users.filter(u => u.role === "RELAY_REP").length}</div><p className="text-xs text-slate-500 mt-1">{users.filter(u => u.role === "RELAY_REP" && u.isActive).length} active</p></CardContent></Card>
           <Card><CardHeader className="pb-3"><CardTitle className="text-sm font-medium text-slate-600"><span className="flex items-center gap-1"><Briefcase className="h-3.5 w-3.5" />Merchandisers</span></CardTitle></CardHeader>
             <CardContent><div className="text-2xl font-bold">{users.filter(u => u.role === "MERCHANDISER").length}</div><p className="text-xs text-slate-500 mt-1">{users.filter(u => u.role === "MERCHANDISER" && u.isActive).length} active</p></CardContent></Card>
         </div>
