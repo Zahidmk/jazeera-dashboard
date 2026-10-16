@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { apiCall } from "@/lib/api/client"
+import { CustomerPricingDialog } from "@/components/CustomerPricingDialog"
 import {
   Users,
   MapPin,
@@ -16,6 +17,7 @@ import {
   Search,
   ExternalLink,
   Edit2,
+  Tag,
   Check,
   X,
   AlertTriangle,
@@ -46,6 +48,9 @@ export default function CustomersPage() {
   const [editLat, setEditLat] = useState("")
   const [editLng, setEditLng] = useState("")
   const [saving, setSaving] = useState(false)
+
+  // Customer pricing dialog
+  const [pricingCustomer, setPricingCustomer] = useState<Customer | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -224,6 +229,21 @@ export default function CustomersPage() {
         )
       },
     },
+    {
+      header: "Pricing",
+      accessor: (row) => (
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-7 text-xs gap-1.5 text-blue-700 border-blue-200 hover:bg-blue-50"
+          onClick={() => setPricingCustomer(row)}
+          title="View this shop's prices"
+        >
+          <Tag className="h-3 w-3" />
+          Prices
+        </Button>
+      ),
+    },
   ]
 
   return (
@@ -330,6 +350,12 @@ export default function CustomersPage() {
           </CardContent>
         </Card>
       </div>
+
+      <CustomerPricingDialog
+        open={pricingCustomer !== null}
+        onOpenChange={(open) => !open && setPricingCustomer(null)}
+        customer={pricingCustomer}
+      />
     </div>
   )
 }

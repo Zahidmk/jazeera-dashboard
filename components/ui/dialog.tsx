@@ -9,9 +9,11 @@ interface DialogProps {
   open?: boolean
   onOpenChange?: (open: boolean) => void
   children: React.ReactNode
+  /** Widens the wrapper past its default max-w-lg (e.g. "max-w-4xl" for tables) */
+  className?: string
 }
 
-const Dialog = ({ open, onOpenChange, children }: DialogProps) => {
+const Dialog = ({ open, onOpenChange, children, className }: DialogProps) => {
   if (!open) return null
 
   return (
@@ -20,7 +22,7 @@ const Dialog = ({ open, onOpenChange, children }: DialogProps) => {
         className="fixed inset-0 bg-black/50"
         onClick={() => onOpenChange?.(false)}
       />
-      <div className="relative z-50 w-full max-w-lg mx-4">
+      <div className={cn("relative z-50 w-full max-w-lg mx-4", className)}>
         {children}
       </div>
     </div>
