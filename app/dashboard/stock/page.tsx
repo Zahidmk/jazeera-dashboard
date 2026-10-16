@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { fetchOdooProducts, fetchOdooStock, OdooStockItem } from "@/lib/api/odoo"
 import { apiCall } from "@/lib/api/client"
-import { AlertTriangle, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react"
+import { AlertTriangle, RefreshCw, ChevronLeft, ChevronRight, Tag, Loader2 } from "lucide-react"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"
 
@@ -27,6 +27,21 @@ type StockRow = {
   imageUrl: string | null
 }
 
+type CustomerOption = {
+  id: string
+  odooId: number | null
+  name: string
+}
+
+// Keyed by Odoo product id — the identifier this page already works in
+type CustomerPrice = {
+  odooId: number | null
+  price: number
+  listPrice: number
+  priceSource: "CUSTOMER_LAST_SALE" | "LIST"
+  lastSaleDate: string | null
+}
+
 export default function StockPage() {
   const [rows, setRows] = useState<StockRow[]>([])
   const [loading, setLoading] = useState(true)
@@ -37,6 +52,12 @@ export default function StockPage() {
   const [syncMsg, setSyncMsg] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 20
+
+  // Customer-wise pricing: pick a shop to see what IT pays, instead of the catalogue price
+  const [customers, setCustomers] = useState<CustomerOption[]>([])
+  const [customerId, setCustomerId] = useState("all")
+  const [customerPrices, setCustomerPrices] = useState<Map<number, CustomerPrice>>(new Map())
+  const [pricesLoading, setPricesLoading] = useState(false)
 
   const loadData = useCallback(async () => {
     setLoading(true)
@@ -76,9 +97,16 @@ export default function StockPage() {
 
   useEffect(() => { loadData() }, [loadData])
 
+  // Customer list for the filter — local customers carry the Odoo partner link
+  useEffect(() => {
+    apiCall<{ success: boolean; data: CustomerOption[] }>("/api/v1/admin/customers")
+      .then((res) => setCustomers(res.data ?? []))
+      .catch(() => setCustomers([]))
+  }, [])
+
   useEffect(() => {
     setCurrentPage(1)
-  }, [search, categoryFilter])
+  }, [search, categoryFilter, customerId])
 
   const handleSync = async () => {
     setSyncing(true)
@@ -116,6 +144,45 @@ export default function StockPage() {
     currentPage * itemsPerPage
   )
 
+  // Price only the rows actually on screen. Each product is one Odoo round-trip
+  // behind the backend, so pricing all 2,000+ products would be unusable.
+  const pageProductIds = paginatedData.map((r) => r.productId).join(",")
+
+  useEffect(() => {
+    if (customerId === "all" || !pageProductIds) {
+      setCustomerPrices(new Map())
+      return
+    }
+
+    let cancelled = false
+    const odooIds = pageProductIds.split(",").map(Number)
+
+    setPricesLoading(true)
+    apiCall<{ success: boolean; data: CustomerPrice[] }>("/api/v1/products/prices", {
+      method: "POST",
+      body: JSON.stringify({ customerId, productOdooIds: odooIds }),
+    })
+      .then((res) => {
+        if (cancelled) return
+        const map = new Map<number, CustomerPrice>()
+        for (const row of res.data ?? []) if (row.odooId != null) map.set(row.odooId, row)
+        setCustomerPrices(map)
+      })
+      .catch(() => {
+        if (!cancelled) setCustomerPrices(new Map())
+      })
+      .finally(() => {
+        if (!cancelled) setPricesLoading(false)
+      })
+
+    return () => { cancelled = true }
+  }, [customerId, pageProductIds])
+
+  const selectedCustomer = customers.find((c) => c.id === customerId) || null
+  const shopPricedCount = paginatedData.filter(
+    (r) => customerPrices.get(r.productId)?.priceSource === "CUSTOMER_LAST_SALE"
+  ).length
+
   const stockColumns: Column<StockRow>[] = [
     {
       header: "Image",
@@ -146,6 +213,42 @@ export default function StockPage() {
       },
     },
     { header: "Unit Price", accessor: (r) => `SAR ${r.priceRetail.toFixed(2)}` },
+    ...(customerId !== "all"
+      ? [
+          {
+            header: "Customer Price",
+            accessor: (r: StockRow) => {
+              const cp = customerPrices.get(r.productId)
+              if (pricesLoading && !cp) {
+                return <span className="text-xs text-slate-400">…</span>
+              }
+              if (!cp) {
+                return <span className="text-xs text-slate-400">—</span>
+              }
+              const fromHistory = cp.priceSource === "CUSTOMER_LAST_SALE"
+              return (
+                <div className="whitespace-nowrap">
+                  <span className={fromHistory ? "font-semibold text-blue-700" : "text-slate-600"}>
+                    SAR {cp.price.toFixed(2)}
+                  </span>
+                  {fromHistory ? (
+                    <span
+                      className="ml-2 inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700 border border-blue-200"
+                      title={cp.lastSaleDate ? `Last bought ${cp.lastSaleDate}` : undefined}
+                    >
+                      Shop price
+                    </span>
+                  ) : (
+                    <span className="ml-2 inline-flex items-center rounded-full bg-slate-50 px-2 py-0.5 text-[10px] font-semibold text-slate-500 border border-slate-200">
+                      List
+                    </span>
+                  )}
+                </div>
+              )
+            },
+          } as Column<StockRow>,
+        ]
+      : []),
     { header: "Total Value", accessor: (r) => `SAR ${r.totalValue.toLocaleString("en-US", { minimumFractionDigits: 2 })}` },
     {
       header: "Locations",
@@ -260,6 +363,20 @@ export default function StockPage() {
             <option value="all">All Categories</option>
             {categories.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
+          <select
+            value={customerId}
+            onChange={(e) => setCustomerId(e.target.value)}
+            className="border rounded-md px-3 py-2 text-sm bg-white max-w-[260px]"
+            title="Show prices for one customer"
+          >
+            <option value="all">All Customers (list price)</option>
+            {customers.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+                {c.odooId ? `` : " (not in Odoo)"}
+              </option>
+            ))}
+          </select>
           <span className="text-sm text-slate-500">
             {loading ? "Loading…" : `${filtered.length} of ${rows.length} products`}
           </span>
@@ -268,6 +385,24 @@ export default function StockPage() {
             Refresh
           </Button>
         </div>
+
+        {/* Customer pricing notice — only this page is priced, so say so */}
+        {customerId !== "all" && (
+          <div className="flex items-center gap-2 rounded-md bg-blue-50 border border-blue-200 px-4 py-2 text-sm text-blue-800">
+            {pricesLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin shrink-0" />
+            ) : (
+              <Tag className="h-4 w-4 shrink-0" />
+            )}
+            <span>
+              {pricesLoading
+                ? `Loading ${selectedCustomer?.name ?? "customer"} prices for this page…`
+                : selectedCustomer && !selectedCustomer.odooId
+                  ? `${selectedCustomer.name} is not linked to an Odoo partner, so every product falls back to the list price.`
+                  : `${selectedCustomer?.name ?? "Customer"} — ${shopPricedCount} of ${paginatedData.length} products on this page are priced from this shop's own history. Prices load per page.`}
+            </span>
+          </div>
+        )}
 
         {/* Stock Table */}
         {loading ? (
