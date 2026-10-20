@@ -1,4 +1,4 @@
-// Shared types + helpers for the Merchandiser admin pages (attendance, shops, visits & feedback)
+// Shared types + helpers for the Merchandiser admin pages (attendance, visits & feedback)
 
 export interface PageMeta { page: number; limit: number; total: number }
 
@@ -34,24 +34,6 @@ export interface DeviceRow {
   firstSeenAt: string
   lastSeenAt: string
   user: UserBrief
-}
-
-export interface ShopRow {
-  id: string
-  odooId: number | null
-  name: string
-  phone: string | null
-  contactPerson: string | null
-  shopType: string | null
-  notes: string | null
-  address: string | null
-  city: string | null
-  district: string | null
-  lat: number | null
-  lng: number | null
-  createdAt: string
-  createdBy: UserBrief | null
-  _count: { shopVisits: number; feedbacks: number }
 }
 
 export interface VisitRow {

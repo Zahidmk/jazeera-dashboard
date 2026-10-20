@@ -25,7 +25,6 @@ import {
   ChevronRight,
   AlertTriangle,
   CalendarCheck,
-  Store,
   ClipboardList,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -49,7 +48,6 @@ const navigation = [
   { name: "Cash Sales", href: "/dashboard/cash-sales", icon: DollarSign },
   { name: "Leads", href: "/dashboard/leads", icon: UserPlus },
   { name: "Attendance", href: "/dashboard/attendance", icon: CalendarCheck },
-  { name: "Merchandiser Shops", href: "/dashboard/shops", icon: Store },
   { name: "Visits & Feedback", href: "/dashboard/shop-visits", icon: ClipboardList },
   { name: "Quotations", href: "/dashboard/quotations", icon: FileText },
   { name: "Reports", href: "/dashboard/reports", icon: BarChart3 },
