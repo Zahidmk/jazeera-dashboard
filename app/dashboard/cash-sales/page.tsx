@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { Topbar } from "@/components/Topbar"
 import { DataTable, Column } from "@/components/DataTable"
 import { PaymentMethodBadge } from "@/components/PaymentMethodBadge"
@@ -15,10 +15,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { apiCall } from "@/lib/api/client"
+import { apiCall, apiBlob } from "@/lib/api/client"
 import { CashSale } from "@/lib/types"
 import { format } from "date-fns"
-import { Eye, Download, Loader2, RefreshCw } from "lucide-react"
+import { Eye, Download, FileText, Loader2, Printer, RefreshCw } from "lucide-react"
 
 export default function CashSalesPage() {
   const [sales, setSales] = useState<CashSale[]>([])
@@ -32,6 +32,35 @@ export default function CashSalesPage() {
   const [driverFilter, setDriverFilter] = useState<string>("all")
   const [receiptModalOpen, setReceiptModalOpen] = useState(false)
   const [selectedSale, setSelectedSale] = useState<CashSale | null>(null)
+
+  // Odoo invoice viewer
+  const [invoiceSale, setInvoiceSale] = useState<CashSale | null>(null)
+  const [invoiceUrl, setInvoiceUrl] = useState<string | null>(null)
+  const [invoiceLoading, setInvoiceLoading] = useState(false)
+  const [invoiceError, setInvoiceError] = useState<string | null>(null)
+  const invoiceFrame = useRef<HTMLIFrameElement>(null)
+
+  const openInvoice = async (sale: CashSale) => {
+    setInvoiceSale(sale)
+    setInvoiceUrl(null)
+    setInvoiceError(null)
+    setInvoiceLoading(true)
+    try {
+      const blob = await apiBlob(`/api/v1/admin/cash-sales/${sale.id}/invoice/pdf`)
+      setInvoiceUrl(URL.createObjectURL(blob))
+    } catch (err: any) {
+      setInvoiceError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setInvoiceLoading(false)
+    }
+  }
+
+  const closeInvoice = () => {
+    if (invoiceUrl) URL.revokeObjectURL(invoiceUrl)
+    setInvoiceSale(null)
+    setInvoiceUrl(null)
+    setInvoiceError(null)
+  }
 
   const loadData = useCallback(async () => {
     setLoading(true)
@@ -73,6 +102,7 @@ export default function CashSalesPage() {
           paymentMethod: sale.saleType === "CREDIT" ? "card" : "cash",
           createdAt: new Date(sale.createdAt),
           receiptUrl: sale.receiptUrl || undefined,
+          invoiceNumber: sale.invoiceNumber || undefined,
           items: (sale.items || []).map((item: any) => ({
             id: item.id,
             productId: item.productId,
@@ -147,6 +177,10 @@ export default function CashSalesPage() {
       accessor: (row) => `SAR ${saleGrandTotal(row).toFixed(2)}`,
     },
     {
+      header: "Invoice",
+      accessor: (row) => row.invoiceNumber ?? <span className="text-slate-400">Pending</span>,
+    },
+    {
       header: "Payment Method",
       accessor: (row) => <PaymentMethodBadge method={row.paymentMethod} />,
     },
@@ -177,6 +211,15 @@ export default function CashSalesPage() {
             title="View receipt"
           >
             <Eye className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => openInvoice(row)}
+            className="cursor-pointer"
+            title="View Odoo invoice"
+          >
+            <FileText className="h-4 w-4" />
           </Button>
         </div>
       ),
@@ -349,6 +392,64 @@ export default function CashSalesPage() {
           </div>
         )}
       </div>
+
+      {/* Odoo Invoice Viewer */}
+      <Dialog open={!!invoiceSale} onOpenChange={(open) => !open && closeInvoice()}>
+        <DialogContent onClose={closeInvoice} className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>
+              Invoice {invoiceSale?.invoiceNumber ?? ""} — {invoiceSale?.customerName}
+            </DialogTitle>
+            <DialogDescription>Tax invoice from Odoo</DialogDescription>
+          </DialogHeader>
+          <div className="py-2">
+            {invoiceLoading && (
+              <div className="flex items-center justify-center py-24 text-slate-500">
+                <Loader2 className="h-6 w-6 animate-spin mr-3 text-indigo-500" />
+                Loading invoice...
+              </div>
+            )}
+            {invoiceError && (
+              <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-800">
+                {invoiceError}
+              </div>
+            )}
+            {invoiceUrl && (
+              <iframe
+                ref={invoiceFrame}
+                src={invoiceUrl}
+                title="Invoice PDF"
+                className="w-full h-[70vh] rounded-md border"
+              />
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={closeInvoice} className="cursor-pointer">
+              Close
+            </Button>
+            {invoiceUrl && (
+              <>
+                <a
+                  href={invoiceUrl}
+                  download={`invoice_${invoiceSale?.invoiceNumber ?? invoiceSale?.id}.pdf`}
+                >
+                  <Button variant="outline" className="cursor-pointer">
+                    <Download className="h-4 w-4 mr-2" />
+                    Download
+                  </Button>
+                </a>
+                <Button
+                  onClick={() => invoiceFrame.current?.contentWindow?.print()}
+                  className="cursor-pointer"
+                >
+                  <Printer className="h-4 w-4 mr-2" />
+                  Print
+                </Button>
+              </>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Receipt Modal */}
       <Dialog open={receiptModalOpen} onOpenChange={setReceiptModalOpen}>

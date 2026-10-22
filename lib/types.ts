@@ -242,6 +242,7 @@ export interface CashSale {
   paymentMethod: PaymentMethod
   createdAt: Date
   receiptUrl?: string
+  invoiceNumber?: string // Odoo invoice number — undefined until the invoice exists
 }
 
 // Leads & Customers

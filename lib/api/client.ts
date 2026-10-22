@@ -56,3 +56,34 @@ export async function apiCall<T>(
 
   return data as T
 }
+
+/** GET a binary file (e.g. a PDF) with the login token. Errors come back as JSON. */
+export async function apiBlob(path: string): Promise<Blob> {
+  const token = getToken()
+  const res = await fetch(`${BASE_URL}${path}`, {
+    headers: {
+      'ngrok-skip-browser-warning': 'true',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  })
+
+  if (res.status === 401 && typeof window !== 'undefined') {
+    removeToken()
+    if (!window.location.pathname.startsWith('/login')) {
+      window.location.href = '/login'
+    }
+  }
+
+  if (!res.ok) {
+    let message = 'Could not load the file'
+    try {
+      const data = await res.json()
+      message = data?.error || data?.message || message
+    } catch {
+      // not JSON - keep the generic message
+    }
+    throw new Error(message)
+  }
+
+  return res.blob()
+}
