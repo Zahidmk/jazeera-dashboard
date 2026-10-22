@@ -15,7 +15,7 @@ import {
   AttendanceRow, PageMeta, UserBrief,
   fmtDateTime, fmtDuration, mapsLink, todayRiyadh,
 } from "@/lib/api/merchandiser"
-import { Loader2, MapPin, Flag, Eye, Users, LogIn, LogOut } from "lucide-react"
+import { Loader2, MapPin, Eye, Users, LogIn, LogOut } from "lucide-react"
 
 interface Overview extends UserBrief { isCheckedIn: boolean; inVisit: boolean }
 interface List<T> { success: boolean; data: T[]; meta?: PageMeta }
@@ -24,7 +24,6 @@ export default function AttendancePage() {
   const [date, setDate] = useState(todayRiyadh())
   const [merchandiserId, setMerchandiserId] = useState("")
   const [status, setStatus] = useState("")
-  const [flaggedOnly, setFlaggedOnly] = useState(false)
   const [page, setPage] = useState(1)
 
   const [rows, setRows] = useState<AttendanceRow[]>([])
@@ -45,7 +44,6 @@ export default function AttendancePage() {
       if (date) qs.set("date", date)
       if (merchandiserId) qs.set("merchandiserId", merchandiserId)
       if (status) qs.set("status", status)
-      if (flaggedOnly) qs.set("flagged", "true")
       const [att, ppl] = await Promise.all([
         apiCall<List<AttendanceRow>>(`/api/v1/admin/attendance?${qs}`),
         apiCall<List<Overview>>("/api/v1/admin/merchandisers"),
@@ -58,7 +56,7 @@ export default function AttendancePage() {
     } finally {
       setLoading(false)
     }
-  }, [date, merchandiserId, status, flaggedOnly, page])
+  }, [date, merchandiserId, status, page])
 
   useEffect(() => { load() }, [load])
 
@@ -95,7 +93,6 @@ export default function AttendancePage() {
         </a>
       ),
     },
-    { header: "Flags", accessor: (r) => (r.flagged ? <Badge variant="destructive"><Flag className="h-3 w-3 mr-1" />Flagged</Badge> : <span className="text-slate-400">—</span>) },
     {
       header: "",
       accessor: (r) => (
@@ -129,10 +126,7 @@ export default function AttendancePage() {
               <Select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1) }} className="w-40">
                 <option value="">Any status</option><option value="open">On duty</option><option value="closed">Checked out</option>
               </Select>
-              <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
-                <input type="checkbox" checked={flaggedOnly} onChange={(e) => { setFlaggedOnly(e.target.checked); setPage(1) }} />Flagged only
-              </label>
-              <Button variant="outline" size="sm" onClick={() => { setDate(""); setMerchandiserId(""); setStatus(""); setFlaggedOnly(false); setPage(1) }} className="cursor-pointer">All dates</Button>
+              <Button variant="outline" size="sm" onClick={() => { setDate(""); setMerchandiserId(""); setStatus(""); setPage(1) }} className="cursor-pointer">All dates</Button>
               <Button variant="outline" size="sm" onClick={load} className="cursor-pointer">Refresh</Button>
             </div>
             {loading ? <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div> : <DataTable data={rows} columns={columns} />}
@@ -182,9 +176,8 @@ export default function AttendancePage() {
               {error && <p className="text-sm text-red-500">{error}</p>}
               <DialogFooter className="gap-2 flex-wrap">
                 {selected.isOpen && (
-                  <Button variant="outline" disabled={busy} className="cursor-pointer text-red-600" onClick={() => { if (confirm("Close this attendance now? The record will be flagged.")) patchAttendance({ forceCheckOut: true, adminNote: note || undefined }) }}>Force check-out</Button>
+                  <Button variant="outline" disabled={busy} className="cursor-pointer text-red-600" onClick={() => { if (confirm("Close this attendance now?")) patchAttendance({ forceCheckOut: true, adminNote: note || undefined }) }}>Force check-out</Button>
                 )}
-                <Button variant="outline" disabled={busy} className="cursor-pointer" onClick={() => patchAttendance({ flagged: !selected.flagged })}>{selected.flagged ? "Remove flag" : "Flag record"}</Button>
                 <Button disabled={busy} className="cursor-pointer" onClick={() => patchAttendance({ adminNote: note })}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save note"}</Button>
               </DialogFooter>
             </>
