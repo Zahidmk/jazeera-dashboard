@@ -9,7 +9,7 @@ import { Select } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { apiCall } from "@/lib/api/client"
 import { format } from "date-fns"
-import { RefreshCw, CheckCircle, XCircle, Loader2, Package, Users, Truck, Layers } from "lucide-react"
+import { RefreshCw, CheckCircle, XCircle, Loader2, Package, Users } from "lucide-react"
 
 interface SyncLogRow {
   id: string
@@ -19,20 +19,6 @@ interface SyncLogRow {
   recordsProcessed: number
   message: string | null
   createdAt: string
-}
-
-interface QueueCounts {
-  waiting: number
-  active: number
-  completed: number
-  failed: number
-}
-
-interface QueueStats {
-  products: QueueCounts
-  customers: QueueCounts
-  orders: QueueCounts
-  total: QueueCounts
 }
 
 type SyncActionState = { syncing: boolean; result: string | null; error: boolean }
@@ -64,7 +50,6 @@ export default function SyncPage() {
   const [odooStatus, setOdooStatus] = useState<{ connected: boolean; version: string; uid: number } | null>(null)
   const [odooChecking, setOdooChecking] = useState(false)
 
-  const [queueStats, setQueueStats] = useState<QueueStats | null>(null)
   const [logs, setLogs] = useState<SyncLogRow[]>([])
   const [logsLoading, setLogsLoading] = useState(true)
 
@@ -79,15 +64,6 @@ export default function SyncPage() {
       setOdooChecking(false)
     }
   }
-
-  const loadQueueStats = useCallback(async () => {
-    try {
-      const json = await apiCall<{ success: boolean; data: QueueStats }>("/api/v1/sync/queue-status")
-      setQueueStats(json.data)
-    } catch {
-      setQueueStats(null)
-    }
-  }, [])
 
   const loadLogs = useCallback(async () => {
     setLogsLoading(true)
@@ -104,18 +80,10 @@ export default function SyncPage() {
     }
   }, [statusFilter, typeFilter])
 
-  const refreshAll = useCallback(() => {
-    loadQueueStats()
-    loadLogs()
-  }, [loadQueueStats, loadLogs])
-
-  const productSync = useSyncAction("/api/v1/sync/products", refreshAll)
-  const customerSync = useSyncAction("/api/v1/sync/customers", refreshAll)
-  const orderSync = useSyncAction("/api/v1/sync/orders", refreshAll)
-  const allSync = useSyncAction("/api/v1/sync/all", refreshAll)
+  const productSync = useSyncAction("/api/v1/sync/products", loadLogs)
+  const customerSync = useSyncAction("/api/v1/sync/customers", loadLogs)
 
   useEffect(() => { checkOdoo() }, [])
-  useEffect(() => { loadQueueStats() }, [loadQueueStats])
   useEffect(() => { loadLogs() }, [loadLogs])
 
   const logsColumns: Column<SyncLogRow>[] = [
@@ -127,25 +95,9 @@ export default function SyncPage() {
     { header: "Time", accessor: (row) => format(new Date(row.createdAt), "MMM dd, yyyy HH:mm") },
   ]
 
-  const queueRows = queueStats
-    ? [
-        { name: "Products", ...queueStats.products },
-        { name: "Customers", ...queueStats.customers },
-        { name: "Orders", ...queueStats.orders },
-      ]
-    : []
-
-  const queueColumns: Column<{ name: string } & QueueCounts>[] = [
-    { header: "Queue", accessor: "name" },
-    { header: "Waiting", accessor: "waiting" },
-    { header: "Active", accessor: "active" },
-    { header: "Completed", accessor: "completed" },
-    { header: "Failed", accessor: "failed" },
-  ]
-
   return (
     <div className="min-h-screen bg-background">
-      <Topbar title="Sync Queue & Logs" />
+      <Topbar title="Sync & Logs" />
       <div className="p-4 lg:p-6 space-y-6">
 
         {/* Odoo connection */}
@@ -173,12 +125,10 @@ export default function SyncPage() {
         </Card>
 
         {/* Trigger sync */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {[
             { label: "Products", icon: Package, action: productSync },
             { label: "Customers", icon: Users, action: customerSync },
-            { label: "Orders", icon: Truck, action: orderSync },
-            { label: "All", icon: Layers, action: allSync },
           ].map(({ label, icon: Icon, action }) => (
             <Card key={label}>
               <CardHeader className="pb-2">
@@ -196,16 +146,6 @@ export default function SyncPage() {
               </CardContent>
             </Card>
           ))}
-        </div>
-
-        {/* Queue status */}
-        <div className="space-y-2">
-          <h2 className="text-sm font-semibold text-slate-700">Queue Status</h2>
-          <DataTable data={queueRows} columns={queueColumns} />
-          <p className="text-xs text-slate-400">
-            {queueStats ? "Live counts from the background job queue." : "Queue stats unavailable."}
-            {" "}If background workers are disabled, syncs run immediately and this will always read zero.
-          </p>
         </div>
 
         {/* Logs */}
@@ -226,7 +166,7 @@ export default function SyncPage() {
                 <option value="orders">Orders</option>
                 <option value="all">Full Sync</option>
               </Select>
-              <Button variant="outline" size="sm" onClick={refreshAll} className="cursor-pointer">
+              <Button variant="outline" size="sm" onClick={loadLogs} className="cursor-pointer">
                 <RefreshCw className="h-3 w-3" />
               </Button>
             </div>

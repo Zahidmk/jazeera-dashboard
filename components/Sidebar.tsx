@@ -49,7 +49,7 @@ const navigation = [
   { name: "Visits & Feedback", href: "/dashboard/shop-visits", icon: ClipboardList },
   { name: "Quotations", href: "/dashboard/quotations", icon: FileText },
   { name: "Reports", href: "/dashboard/reports", icon: BarChart3 },
-  { name: "Sync Queue & Logs", href: "/dashboard/sync", icon: ListChecks },
+  { name: "Sync & Logs", href: "/dashboard/sync", icon: ListChecks },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ]
 
