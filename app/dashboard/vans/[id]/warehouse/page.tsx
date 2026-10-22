@@ -228,10 +228,10 @@ export default function VanWarehousePage() {
           <>
             <Button
               variant="outline"
-              onClick={() => router.push(`/dashboard/vans/${vanId}`)}
+              onClick={() => router.push("/dashboard/vans-reps")}
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Van Details
+              Back to Vans
             </Button>
             <Button variant="outline" onClick={load} disabled={loading}>
               <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />

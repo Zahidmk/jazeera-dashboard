@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import { Topbar } from "@/components/Topbar"
 import { DataTable, Column } from "@/components/DataTable"
 import { StatusBadge } from "@/components/StatusBadge"
@@ -18,7 +19,7 @@ import {
 } from "@/components/ui/dialog"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { apiCall } from "@/lib/api/client"
-import { Plus, Edit, UserPlus, Package, Truck, Users, Loader2, Archive } from "lucide-react"
+import { Plus, Edit, UserPlus, Package, Truck, Users, Loader2, Archive, Warehouse } from "lucide-react"
 
 interface DriverUser {
   id: string
@@ -45,6 +46,7 @@ interface ApiResponse<T> {
 }
 
 export default function VansRepsPage() {
+  const router = useRouter()
   const [vans, setVans] = useState<VanRecord[]>([])
   const [drivers, setDrivers] = useState<DriverUser[]>([])
   const [loading, setLoading] = useState(true)
@@ -190,6 +192,17 @@ export default function VansRepsPage() {
       header: "Actions",
       accessor: (row) => (
         <div className="flex gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() =>
+              router.push(`/dashboard/vans/${row.id}/warehouse?date=${new Date().toISOString().split("T")[0]}`)
+            }
+            className="cursor-pointer text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+            title="View van warehouse (stock, sales, remaining inventory)"
+          >
+            <Warehouse className="h-4 w-4" />
+          </Button>
           <Button variant="ghost" size="sm" onClick={() => openEditVan(row)} className="cursor-pointer" title="Edit"><Edit className="h-4 w-4" /></Button>
           <Button variant="ghost" size="sm" onClick={() => openAssign(row)} className="cursor-pointer" title="Assign Driver"><UserPlus className="h-4 w-4" /></Button>
           <Button variant="ghost" size="sm" onClick={() => archiveVan(row.id)} className="cursor-pointer text-red-500 hover:text-red-700 hover:bg-red-50" title="Archive Van"><Archive className="h-4 w-4" /></Button>

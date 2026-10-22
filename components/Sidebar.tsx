@@ -17,7 +17,6 @@ import {
   DollarSign,
   UserPlus,
   BarChart3,
-  Warehouse,
   Users,
   FileText,
   Calendar,
@@ -36,7 +35,6 @@ import { createContext, useContext, useState, ReactNode } from "react"
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Vans", href: "/dashboard/vans-reps", icon: Truck },
-  { name: "Van Warehouse", href: "/dashboard/warehouse", icon: Warehouse },
   { name: "Damaged Stock", href: "/dashboard/damaged-stock", icon: AlertTriangle },
   { name: "Users & Roles", href: "/dashboard/users", icon: UserCog },
   { name: "Customers", href: "/dashboard/customers", icon: Users },
