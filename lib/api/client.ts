@@ -1,4 +1,5 @@
-export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://glamourously-pernickety-evalyn.ngrok-free.dev'
+// Set NEXT_PUBLIC_API_URL in .env for any real deployment; the fallback is local dev only.
+export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
 
 export function getToken(): string | null {
   if (typeof window === 'undefined') return null
