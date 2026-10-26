@@ -47,6 +47,9 @@ type DamagedStockReport = {
   items: DamagedItem[]
 }
 
+// Storekeeper "return to warehouse" requests are stored with this note prefix.
+const isWarehouseReturn = (item: DamagedItem) => item.reason.startsWith("Warehouse return")
+
 export default function DamagedStockPage() {
   const [data, setData] = useState<DamagedStockReport | null>(null)
   const [loading, setLoading] = useState(true)
@@ -143,7 +146,7 @@ export default function DamagedStockPage() {
     {
       header: "Qty",
       accessor: (row) => (
-        <Badge variant={row.reason === 'RETURN' ? 'outline' : 'destructive'} className="font-semibold px-2 py-0.5">
+        <Badge variant={isWarehouseReturn(row) ? 'outline' : 'destructive'} className="font-semibold px-2 py-0.5">
           {row.quantity} units
         </Badge>
       ),
@@ -151,9 +154,16 @@ export default function DamagedStockPage() {
     {
       header: "Reason / Notes",
       accessor: (row) => (
-        <span className="text-slate-600 font-medium italic block max-w-xs truncate">
-          "{row.reason}"
-        </span>
+        <div className="max-w-xs">
+          {isWarehouseReturn(row) && (
+            <Badge variant="outline" className="mb-1 border-blue-300 text-blue-700">
+              Return to warehouse
+            </Badge>
+          )}
+          <span className="text-slate-600 font-medium italic block truncate" title={row.reason}>
+            "{row.reason}"
+          </span>
+        </div>
       ),
     },
     {
@@ -161,7 +171,7 @@ export default function DamagedStockPage() {
       accessor: (row) => (
         <span className="text-xs text-slate-500 flex items-center gap-1">
           <Clock className="h-3.5 w-3.5 text-slate-400" />
-          {format(new Date(row.uploadedAt), "HH:mm")}
+          {format(new Date(row.uploadedAt), "dd MMM HH:mm")}
         </span>
       ),
     },
