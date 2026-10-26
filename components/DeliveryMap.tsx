@@ -9,7 +9,7 @@ interface MapPin {
   title: string
   subtitle?: string
   status?: string
-  type: "delivery" | "lead" | "sale" | "shop"
+  type: "delivery" | "lead" | "sale" | "shop" | "staff"
 }
 
 // Pin text can originate from user input (e.g. shop names typed in the mobile app) — never inject it as raw HTML
@@ -31,6 +31,7 @@ const STATUS_COLORS: Record<string, string> = {
   lead: "#f59e0b",
   sale: "#22c55e",
   shop: "#14b8a6",
+  staff: "#2563eb",
 }
 
 export default function DeliveryMap({ pins, height = "500px" }: DeliveryMapProps) {
@@ -93,6 +94,7 @@ export default function DeliveryMap({ pins, height = "500px" }: DeliveryMapProps
           pin.type === "delivery" ? "🚚 Delivery"
           : pin.type === "lead" ? "📋 Lead"
           : pin.type === "shop" ? "🏪 Shop"
+          : pin.type === "staff" ? "🧑 Staff"
           : "💰 Sale"
 
         L.marker([pin.lat, pin.lng], { icon })
