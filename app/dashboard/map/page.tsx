@@ -23,7 +23,7 @@ type Person = {
   name: string
   phone: string | null
   role: "MERCHANDISER" | "DRIVER" | "SALESMAN"
-  status: "IN_VISIT" | "ON_DUTY" | "CHECKED_OUT" | "NOT_STARTED" | "ON_SHIFT" | "ACTIVE_TODAY" | "NO_ACTIVITY"
+  status: "IN_VISIT" | "ON_DUTY" | "STALE_OPEN" | "CHECKED_OUT" | "NOT_STARTED" | "ON_SHIFT" | "ACTIVE_TODAY" | "NO_ACTIVITY"
   lat: number | null
   lng: number | null
   at: string | null
@@ -43,6 +43,7 @@ type LeadItem = { id: string; name: string; address?: string; lat?: number; lng?
 const STATUS_LABEL: Record<Person["status"], string> = {
   IN_VISIT: "In a visit",
   ON_DUTY: "On duty",
+  STALE_OPEN: "Not checked out",
   CHECKED_OUT: "Checked out",
   NOT_STARTED: "Not started",
   ON_SHIFT: "On shift",
@@ -54,6 +55,7 @@ const STATUS_PILL: Record<Person["status"], string> = {
   IN_VISIT: "bg-blue-100 text-blue-700",
   ON_DUTY: "bg-green-100 text-green-700",
   ON_SHIFT: "bg-green-100 text-green-700",
+  STALE_OPEN: "bg-red-100 text-red-700",
   ACTIVE_TODAY: "bg-amber-100 text-amber-700",
   CHECKED_OUT: "bg-slate-100 text-slate-600",
   NOT_STARTED: "bg-slate-100 text-slate-500",
@@ -69,7 +71,7 @@ const SOURCE_LABEL: Record<NonNullable<Person["source"]>, string> = {
 }
 
 // Most useful first: people who are out working
-const STATUS_ORDER: Person["status"][] = ["IN_VISIT", "ON_DUTY", "ON_SHIFT", "ACTIVE_TODAY", "CHECKED_OUT", "NOT_STARTED", "NO_ACTIVITY"]
+const STATUS_ORDER: Person["status"][] = ["IN_VISIT", "ON_DUTY", "ON_SHIFT", "STALE_OPEN", "ACTIVE_TODAY", "CHECKED_OUT", "NOT_STARTED", "NO_ACTIVITY"]
 
 function timeAgo(iso: string | null, now: number): string {
   if (!iso) return "no position yet"
