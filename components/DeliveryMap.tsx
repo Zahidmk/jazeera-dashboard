@@ -67,12 +67,33 @@ export default function DeliveryMap({ pins, height = "500px" }: DeliveryMapProps
           ? [validPins[0].lat, validPins[0].lng]
           : defaultCenter
 
-      const map = L.map(containerRef.current).setView(center, 11)
+      const map = L.map(containerRef.current, { attributionControl: false }).setView(center, 11)
       mapRef.current = map
 
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: '© <a href="https://www.openstreetmap.org/">OpenStreetMap</a>',
-      }).addTo(map)
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map)
+
+      // OSM's licence requires the credit, so it is collapsed to an "i" button
+      // that opens on click rather than removed.
+      const credit = new L.Control({ position: "bottomright" })
+      credit.onAdd = () => {
+        const box = L.DomUtil.create("div")
+        box.style.cssText =
+          "background:rgba(255,255,255,0.9);border-radius:12px;font:11px/1.4 sans-serif;color:#333;cursor:pointer;"
+        const icon = L.DomUtil.create("span", "", box)
+        icon.textContent = "i"
+        icon.title = "Map credits"
+        icon.style.cssText = "display:inline-block;width:20px;height:20px;line-height:20px;text-align:center;font-weight:bold;"
+        const text = L.DomUtil.create("span", "", box)
+        text.innerHTML = ' © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors&nbsp;'
+        text.style.display = "none"
+        box.onclick = (e: MouseEvent) => {
+          if ((e.target as HTMLElement).tagName === "A") return
+          text.style.display = text.style.display === "none" ? "inline" : "none"
+        }
+        L.DomEvent.disableClickPropagation(box)
+        return box
+      }
+      credit.addTo(map)
 
       validPins.forEach((pin) => {
         const color = STATUS_COLORS[pin.status || pin.type] || "#3b82f6"
