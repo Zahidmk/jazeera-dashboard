@@ -15,6 +15,8 @@ export interface LiveMapMarker {
   /** Short label shown in the popup, e.g. "In visit" */
   badge?: string
   kind: MapMarkerKind
+  /** Overrides the kind colour, e.g. a shop's branch colour (#RRGGBB) */
+  color?: string
   /** Position is old: drawn faded */
   stale?: boolean
 }
@@ -77,7 +79,7 @@ function buildMarkerElement(m: LiveMapMarker): HTMLElement {
     `width:${style.size}px`,
     `height:${style.size}px`,
     "border-radius:50%",
-    `background:${style.color}`,
+    `background:${m.color ?? style.color}`,
     "color:#fff",
     "font:700 12px sans-serif",
     "display:flex",
@@ -108,7 +110,7 @@ function buildInfoContent(m: LiveMapMarker): HTMLElement {
   if (m.badge) {
     const badge = document.createElement("span")
     badge.textContent = m.badge
-    badge.style.cssText = `font-size:11px;background:${KIND_STYLE[m.kind].color};color:#fff;padding:2px 8px;border-radius:999px`
+    badge.style.cssText = `font-size:11px;background:${m.color ?? KIND_STYLE[m.kind].color};color:#fff;padding:2px 8px;border-radius:999px`
     root.appendChild(badge)
   }
   return root

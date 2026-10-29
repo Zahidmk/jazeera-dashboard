@@ -31,7 +31,7 @@ type Person = {
   detail: string | null
 }
 
-type Shop = { id: string; name: string; lat: number; lng: number; shopType: string | null; city: string | null }
+type Shop = { id: string; name: string; lat: number; lng: number; shopType: string | null; markerColor: string | null; city: string | null }
 
 type LiveMapResponse = {
   success: boolean
@@ -175,6 +175,7 @@ export default function MapPage() {
           subtitle: [s.shopType, s.city].filter(Boolean).join(" · ") || undefined,
           badge: "Shop",
           kind: "shop",
+          color: s.markerColor ?? undefined,
         })
       }
     }
