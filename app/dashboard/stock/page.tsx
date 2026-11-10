@@ -135,7 +135,6 @@ export default function StockPage() {
   })
   const lowStockItems = filtered.filter((r) => r.totalQty < 10 && r.totalQty >= 0)
   const outOfStockItems = filtered.filter((r) => r.totalQty <= 0)
-  const totalValue = filtered.reduce((sum, r) => sum + r.totalValue, 0)
 
   const totalItems = filtered.length
   const totalPages = Math.ceil(totalItems / itemsPerPage)
@@ -282,7 +281,7 @@ export default function StockPage() {
         )}
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-slate-600">Total Products</CardTitle>
@@ -290,17 +289,6 @@ export default function StockPage() {
             <CardContent>
               <div className="text-2xl font-bold">{loading ? "…" : rows.length.toLocaleString()}</div>
               <p className="text-xs text-slate-500 mt-1">from Odoo</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-slate-600">Total Stock Value</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {loading ? "…" : `SAR ${totalValue.toLocaleString("en-US", { minimumFractionDigits: 2 })}`}
-              </div>
-              <p className="text-xs text-slate-500 mt-1">all products</p>
             </CardContent>
           </Card>
           <Card>
