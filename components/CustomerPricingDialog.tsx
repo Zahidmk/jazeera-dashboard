@@ -19,8 +19,6 @@ import {
   AlertTriangle,
   ChevronLeft,
   ChevronRight,
-  TrendingDown,
-  TrendingUp,
   Loader2,
 } from "lucide-react"
 
@@ -208,9 +206,6 @@ export function CustomerPricingDialog({ open, onOpenChange, customer }: Customer
                   const listed = hasListPrice(listPrice)
                   const fromHistory = p.priceSource === "CUSTOMER_LAST_SALE"
                   const shopPrice = fromHistory ? (p.customerPrice ?? null) : listed ? listPrice : null
-                  const diff = shopPrice != null && listed ? shopPrice - listPrice : 0
-                  const cheaper = diff < -0.001
-                  const dearer = diff > 0.001
 
                   return (
                     <tr key={p.id} className="border-t border-slate-100 hover:bg-slate-50/60">
@@ -234,21 +229,6 @@ export function CustomerPricingDialog({ open, onOpenChange, customer }: Customer
                         >
                           {shopPrice != null ? `SAR ${shopPrice.toFixed(2)}` : "No price"}
                         </span>
-                        {fromHistory && (cheaper || dearer) && (
-                          <span
-                            className={`ml-2 inline-flex items-center gap-0.5 text-xs ${
-                              cheaper ? "text-green-600" : "text-orange-600"
-                            }`}
-                          >
-                            {cheaper ? (
-                              <TrendingDown className="h-3 w-3" />
-                            ) : (
-                              <TrendingUp className="h-3 w-3" />
-                            )}
-                            {diff > 0 ? "+" : ""}
-                            {diff.toFixed(2)}
-                          </span>
-                        )}
                       </td>
                       <td className="px-4 py-2.5">
                         {fromHistory ? (
