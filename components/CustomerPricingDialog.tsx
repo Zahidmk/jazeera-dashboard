@@ -47,6 +47,8 @@ type PricedProduct = {
   imageUrl: string | null
   // Present only because we pass customerId
   customerPrice?: number
+  // The product's price on this customer's Odoo pricelist
+  pricelistPrice?: number
   priceSource?: "CUSTOMER_LAST_SALE" | "LIST"
   lastSaleDate?: string | null
 }
@@ -201,10 +203,12 @@ export function CustomerPricingDialog({ open, onOpenChange, customer }: Customer
               </thead>
               <tbody>
                 {products.map((p) => {
-                  const listed = hasListPrice(p.priceRetail)
-                  const shopPrice = p.customerPrice ?? (listed ? p.priceRetail : null)
+                  // The customer's price on their own Odoo pricelist, else the catalogue price
+                  const listPrice = p.pricelistPrice ?? p.priceRetail
+                  const listed = hasListPrice(listPrice)
                   const fromHistory = p.priceSource === "CUSTOMER_LAST_SALE"
-                  const diff = shopPrice != null && listed ? shopPrice - p.priceRetail : 0
+                  const shopPrice = fromHistory ? (p.customerPrice ?? null) : listed ? listPrice : null
+                  const diff = shopPrice != null && listed ? shopPrice - listPrice : 0
                   const cheaper = diff < -0.001
                   const dearer = diff > 0.001
 
@@ -220,7 +224,7 @@ export function CustomerPricingDialog({ open, onOpenChange, customer }: Customer
                         </p>
                       </td>
                       <td className="px-4 py-2.5 text-right tabular-nums text-slate-500">
-                        {formatListPrice(p.priceRetail)}
+                        {formatListPrice(listPrice)}
                       </td>
                       <td className="px-4 py-2.5 text-right">
                         <span
