@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { fetchOdooProducts, fetchOdooStock, OdooStockItem } from "@/lib/api/odoo"
 import { apiCall } from "@/lib/api/client"
+import { formatListPrice } from "@/lib/utils"
 import { AlertTriangle, RefreshCw, ChevronLeft, ChevronRight, Tag, Loader2 } from "lucide-react"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"
@@ -211,7 +212,7 @@ export default function StockPage() {
         return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800">In Stock</span>
       },
     },
-    { header: "Unit Price", accessor: (r) => `SAR ${r.priceRetail.toFixed(2)}` },
+    { header: "Unit Price", accessor: (r) => formatListPrice(r.priceRetail) },
     ...(customerId !== "all"
       ? [
           {

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { apiCall } from "@/lib/api/client"
 import { format } from "date-fns"
+import { formatListPrice } from "@/lib/utils"
 import {
   ArrowLeft,
   Truck,
@@ -215,7 +216,7 @@ export default function VanWarehousePage() {
     },
     {
       header: "Unit Price",
-      accessor: (row) => `SAR ${row.priceRetail.toFixed(2)}`,
+      accessor: (row) => formatListPrice(row.priceRetail),
     },
   ]
 

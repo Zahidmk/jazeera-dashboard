@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { formatListPrice, hasListPrice } from "@/lib/utils"
 import {
   Dialog,
   DialogContent,
@@ -200,9 +201,10 @@ export function CustomerPricingDialog({ open, onOpenChange, customer }: Customer
               </thead>
               <tbody>
                 {products.map((p) => {
-                  const shopPrice = p.customerPrice ?? p.priceRetail
+                  const listed = hasListPrice(p.priceRetail)
+                  const shopPrice = p.customerPrice ?? (listed ? p.priceRetail : null)
                   const fromHistory = p.priceSource === "CUSTOMER_LAST_SALE"
-                  const diff = shopPrice - p.priceRetail
+                  const diff = shopPrice != null && listed ? shopPrice - p.priceRetail : 0
                   const cheaper = diff < -0.001
                   const dearer = diff > 0.001
 
@@ -218,7 +220,7 @@ export function CustomerPricingDialog({ open, onOpenChange, customer }: Customer
                         </p>
                       </td>
                       <td className="px-4 py-2.5 text-right tabular-nums text-slate-500">
-                        SAR {p.priceRetail.toFixed(2)}
+                        {formatListPrice(p.priceRetail)}
                       </td>
                       <td className="px-4 py-2.5 text-right">
                         <span
@@ -226,7 +228,7 @@ export function CustomerPricingDialog({ open, onOpenChange, customer }: Customer
                             fromHistory ? "text-blue-700" : "text-slate-600"
                           }`}
                         >
-                          SAR {shopPrice.toFixed(2)}
+                          {shopPrice != null ? `SAR ${shopPrice.toFixed(2)}` : "No price"}
                         </span>
                         {fromHistory && (cheaper || dearer) && (
                           <span
