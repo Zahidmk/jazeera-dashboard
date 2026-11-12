@@ -81,7 +81,19 @@ export default function AttendancePage() {
   const checkedIn = people.filter((p) => p.isCheckedIn).length
 
   const columns: Column<AttendanceRow>[] = [
-    { header: "Merchandiser", accessor: (r) => <span className="font-medium">{r.merchandiser.name}</span> },
+    {
+      header: "Staff",
+      accessor: (r) => (
+        <div>
+          <span className="font-medium">{r.merchandiser.name}</span>
+          {(r.merchandiser as { role?: string }).role && (
+            <span className="block text-xs text-muted-foreground capitalize">
+              {String((r.merchandiser as { role?: string }).role).toLowerCase().replace("_", " ")}
+            </span>
+          )}
+        </div>
+      ),
+    },
     { header: "Check-in", accessor: (r) => fmtDateTime(r.checkInAt) },
     { header: "Check-out", accessor: (r) => (r.isOpen ? <Badge variant="warning">On duty</Badge> : fmtDateTime(r.checkOutAt)) },
     { header: "Duration", accessor: (r) => fmtDuration(r.durationMinutes) },
@@ -103,10 +115,10 @@ export default function AttendancePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Topbar title="Merchandiser Attendance" />
+      <Topbar title="Staff Attendance" />
       <div className="p-3 sm:p-4 lg:p-6 xl:p-8 space-y-4 sm:space-y-6">
         <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-3">
-          <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-slate-600"><span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" />Merchandisers</span></CardTitle></CardHeader>
+          <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-slate-600"><span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" />Staff</span></CardTitle></CardHeader>
             <CardContent><div className="text-2xl font-bold">{people.length}</div></CardContent></Card>
           <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-slate-600"><span className="flex items-center gap-1"><LogIn className="h-3.5 w-3.5" />On duty now</span></CardTitle></CardHeader>
             <CardContent><div className="text-2xl font-bold">{checkedIn}</div></CardContent></Card>
@@ -120,8 +132,8 @@ export default function AttendancePage() {
             <div className="flex gap-3 items-center flex-wrap">
               <Input type="date" value={date} onChange={(e) => { setDate(e.target.value); setPage(1) }} className="w-44" />
               <Select value={merchandiserId} onChange={(e) => { setMerchandiserId(e.target.value); setPage(1) }} className="w-52">
-                <option value="">All merchandisers</option>
-                {people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                <option value="">All staff</option>
+                {people.map((p) => <option key={p.id} value={p.id}>{p.name}{(p as { role?: string }).role ? ` (${String((p as { role?: string }).role).toLowerCase()})` : ""}</option>)}
               </Select>
               <Select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1) }} className="w-40">
                 <option value="">Any status</option><option value="open">On duty</option><option value="closed">Checked out</option>
