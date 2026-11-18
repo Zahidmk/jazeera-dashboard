@@ -113,7 +113,20 @@ export default function ShopVisitsPage() {
     { header: "Shop", accessor: (v) => <span className="font-medium">{v.customer.name}</span> },
     { header: "Merchandiser", accessor: (v) => v.merchandiser.name },
     { header: "Started", accessor: (v) => fmtDateTime(v.startedAt) },
-    { header: "Ended", accessor: (v) => (v.status === "IN_PROGRESS" ? <Badge variant="warning">In progress</Badge> : fmtTime(v.endedAt)) },
+    {
+      header: "Ended",
+      accessor: (v) =>
+        v.status === "IN_PROGRESS" ? (
+          <Badge variant="warning">In progress</Badge>
+        ) : (
+          <div className="flex flex-col items-start gap-1">
+            <span>{fmtTime(v.endedAt)}</span>
+            {v.notes?.startsWith("Auto-closed") && (
+              <Badge variant="warning" title={v.notes}>Auto-closed</Badge>
+            )}
+          </div>
+        ),
+    },
     { header: "Distance", accessor: (v) => v.startDistanceM == null ? "—" : v.outOfRange ? <Badge variant="destructive">{Math.round(v.startDistanceM)} m · out of range</Badge> : `${Math.round(v.startDistanceM)} m` },
     { header: "Feedback", accessor: (v) => <Badge variant="secondary">{v._count.feedback}</Badge> },
     { header: "", accessor: (v) => <Button variant="ghost" size="sm" className="cursor-pointer" onClick={() => openVisit(v.id)}>Details</Button> },
