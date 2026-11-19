@@ -49,6 +49,27 @@ export interface VisitRow {
   _count: { feedback: number }
 }
 
+export interface ShopRow {
+  id: string
+  odooId: number | string | null
+  name: string
+  phone: string | null
+  contactPerson: string | null
+  shopType: string | null
+  markerColor: string | null
+  notes: string | null
+  address: string | null
+  street: string | null
+  district: string | null
+  city: string | null
+  buildingNumber: string | null
+  lat: number | null
+  lng: number | null
+  createdAt: string
+  createdBy: (UserBrief & { role?: string }) | null
+  _count: { shopVisits: number; feedbacks: number }
+}
+
 export const FEEDBACK_CATEGORIES = ["STOCK", "DISPLAY", "PRICING", "COMPETITOR", "SERVICE", "OTHER"] as const
 export const FEEDBACK_STATUSES = ["NEW", "REVIEWED", "RESOLVED"] as const
 

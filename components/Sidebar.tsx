@@ -23,6 +23,7 @@ import {
   AlertTriangle,
   CalendarCheck,
   ClipboardList,
+  Store,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -44,6 +45,7 @@ const navigation = [
   { name: "Leads", href: "/dashboard/leads", icon: UserPlus },
   { name: "Attendance", href: "/dashboard/attendance", icon: CalendarCheck },
   { name: "Visits & Feedback", href: "/dashboard/shop-visits", icon: ClipboardList },
+  { name: "Merchandiser Shops", href: "/dashboard/merchandiser-shops", icon: Store },
   { name: "Quotations", href: "/dashboard/quotations", icon: FileText },
   { name: "Reports", href: "/dashboard/reports", icon: BarChart3 },
   { name: "Sync & Logs", href: "/dashboard/sync", icon: ListChecks },
