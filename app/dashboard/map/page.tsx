@@ -27,7 +27,7 @@ type Person = {
   lat: number | null
   lng: number | null
   at: string | null
-  source: "CHECK_IN" | "CHECK_OUT" | "VISIT_START" | "VISIT_END" | "SALE" | null
+  source: "CHECK_IN" | "CHECK_OUT" | "VISIT_START" | "VISIT_END" | "SALE" | "LIVE" | null
   detail: string | null
 }
 
@@ -68,6 +68,7 @@ const SOURCE_LABEL: Record<NonNullable<Person["source"]>, string> = {
   VISIT_START: "Started visit",
   VISIT_END: "Ended visit",
   SALE: "Cash sale",
+  LIVE: "Live",
 }
 
 // Most useful first: people who are out working
